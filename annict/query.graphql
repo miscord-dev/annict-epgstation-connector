@@ -1,0 +1,9 @@
+query GetWannaWatchWorks {
+  viewer {
+    works(state: WANNA_WATCH){
+      nodes {
+        title
+      }
+    }
+  }
+}

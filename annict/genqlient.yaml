@@ -1,0 +1,9 @@
+schema: schema.graphql
+operations:
+- query.graphql
+generated: generated.go
+package: annict
+
+bindings:
+  DateTime:
+    type: time.Time
