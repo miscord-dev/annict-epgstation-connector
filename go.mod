@@ -10,4 +10,5 @@ require (
 	github.com/urfave/cli/v2 v2.23.7
 	github.com/vektah/gqlparser/v2 v2.5.1 // indirect
 	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/sync v0.1.0
 )
