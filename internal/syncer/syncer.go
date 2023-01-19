@@ -83,13 +83,11 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string)
 					AllowEndLack:   false,
 				},
 			}
-			res, err := s.esClient.PostRules(ctx, body)
+			_, err := s.esClient.PostRules(ctx, body)
 			if err != nil {
 				return err
 			}
-			if res.StatusCode != http.StatusOK {
-				return fmt.Errorf("invalid status code: %d", res.StatusCode)
-			}
+			// TODO(musaprg): output response in the log message
 			return nil
 		})
 	}
