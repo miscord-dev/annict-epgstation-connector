@@ -55,6 +55,10 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string)
 	for _, title := range titles {
 		title := title
 		eg.Go(func() error {
+			if rules, _ := s.getRulesByKeyword(ctx, title); len(rules) != 0 {
+				// TODO(musaprg): output log message about skipping registeration of rule for this keyword
+				return nil
+			}
 			body := epgstation.PostRulesJSONRequestBody{
 				SearchOption: epgstation.RuleSearchOption{
 					SKY: epgstation.NewTruePointer(),
@@ -95,6 +99,17 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string)
 		return fmt.Errorf("failed to register rules into EPGStation: %w", err)
 	}
 	return nil
+}
+
+func (s *syncer) getRulesByKeyword(ctx context.Context, keyword string) ([]epgstation.RuleKeywordItem, error) {
+	r, _ := s.esClient.GetRulesKeyword(ctx, &epgstation.GetRulesKeywordParams{
+		Keyword: &keyword,
+	})
+	res, err := epgstation.ParseGetRulesKeywordResponse(r)
+	if err != nil {
+		return nil, err
+	}
+	return res.JSON200.Items, nil
 }
 
 func (s *syncer) getWannaWatchWorks(ctx context.Context) ([]string, error) {
