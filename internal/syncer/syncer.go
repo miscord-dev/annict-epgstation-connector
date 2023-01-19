@@ -25,7 +25,7 @@ type SyncerOpt struct {
 	EPGStationEndpoint string
 }
 
-func NewSyncer(opts SyncerOpt) (Interface, error) {
+func NewSyncer(opts *SyncerOpt) (Interface, error) {
 	annictClient := graphql.NewClient(opts.AnnictEndpoint, http.DefaultClient)
 	esClient, err := epgstation.NewClient(opts.EPGStationEndpoint)
 	if err != nil {

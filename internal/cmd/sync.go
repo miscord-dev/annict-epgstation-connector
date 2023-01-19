@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/musaprg/annict-epgstation-connector/internal/syncer"
 	"github.com/urfave/cli/v2"
 )
 
@@ -10,7 +9,16 @@ var syncCmd = &cli.Command{
 	Name:  "sync",
 	Usage: "sync",
 	Action: func(c *cli.Context) error {
-		fmt.Println("added task: ", c.Args().First())
+		s, err := syncer.NewSyncer(&syncer.SyncerOpt{
+			AnnictEndpoint:     c.String(string(annictEndpointFlag)),
+			EPGStationEndpoint: c.String(string(epgstationEndpointFlag)),
+		})
+		if err != nil {
+			return err
+		}
+		if err := s.Sync(c.Context); err != nil {
+			return err
+		}
 		return nil
 	},
 }
