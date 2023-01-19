@@ -22,11 +22,13 @@ type syncer struct {
 
 type SyncerOpt struct {
 	AnnictEndpoint     string
+	AnnictAPIToken     string
 	EPGStationEndpoint string
 }
 
 func NewSyncer(opts *SyncerOpt) (Interface, error) {
-	annictClient := graphql.NewClient(opts.AnnictEndpoint, http.DefaultClient)
+	annictClient := graphql.NewClient(opts.AnnictEndpoint,
+		&http.Client{Transport: annict.NewAuthedTransport(opts.AnnictAPIToken, http.DefaultTransport)})
 	esClient, err := epgstation.NewClient(opts.EPGStationEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Syncer: %w", err)

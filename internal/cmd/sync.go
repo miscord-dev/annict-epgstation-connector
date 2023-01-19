@@ -12,6 +12,7 @@ var syncCmd = &cli.Command{
 		s, err := syncer.NewSyncer(&syncer.SyncerOpt{
 			AnnictEndpoint:     c.String(string(annictEndpointFlag)),
 			EPGStationEndpoint: c.String(string(epgstationEndpointFlag)),
+			AnnictAPIToken:     c.String(string(annictAPITokenFlag)),
 		})
 		if err != nil {
 			return err
