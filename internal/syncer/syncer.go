@@ -8,6 +8,7 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"github.com/musaprg/annict-epgstation-connector/annict"
 	"github.com/musaprg/annict-epgstation-connector/epgstation"
+	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -40,10 +41,24 @@ func NewSyncer(opts *SyncerOpt) (Interface, error) {
 }
 
 func (s *syncer) Sync(ctx context.Context) error {
-	titles, err := s.getWannaWatchWorks(ctx)
-	if err != nil {
+	titles := []string{}
+	if ts, err := s.getWannaWatchWorks(ctx); err != nil {
 		return err
+	} else {
+		titles = append(titles, ts...)
 	}
+	if ts, err := s.getWatchingWorks(ctx); err != nil {
+		return err
+	} else {
+		titles = append(titles, ts...)
+	}
+	if ts, err := s.getOnHoldWorks(ctx); err != nil {
+		return err
+	} else {
+		titles = append(titles, ts...)
+	}
+	slices.Compact(titles)
+
 	if err := s.registerRulesToEpgStation(ctx, titles); err != nil {
 		return err
 	}
@@ -115,6 +130,30 @@ func (s *syncer) getRulesByKeyword(ctx context.Context, keyword string) ([]epgst
 func (s *syncer) getWannaWatchWorks(ctx context.Context) ([]string, error) {
 	var titles []string
 	r, err := annict.GetWannaWatchWorks(ctx, s.annictClient)
+	if err != nil {
+		return titles, fmt.Errorf("failed to sync: %w", err)
+	}
+	for _, n := range r.Viewer.Works.Nodes {
+		titles = append(titles, n.Title)
+	}
+	return titles, nil
+}
+
+func (s *syncer) getWatchingWorks(ctx context.Context) ([]string, error) {
+	var titles []string
+	r, err := annict.GetWatchingWorks(ctx, s.annictClient)
+	if err != nil {
+		return titles, fmt.Errorf("failed to sync: %w", err)
+	}
+	for _, n := range r.Viewer.Works.Nodes {
+		titles = append(titles, n.Title)
+	}
+	return titles, nil
+}
+
+func (s *syncer) getOnHoldWorks(ctx context.Context) ([]string, error) {
+	var titles []string
+	r, err := annict.GetOnHoldWorks(ctx, s.annictClient)
 	if err != nil {
 		return titles, fmt.Errorf("failed to sync: %w", err)
 	}

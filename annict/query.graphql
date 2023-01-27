@@ -7,3 +7,23 @@ query GetWannaWatchWorks {
     }
   }
 }
+
+query GetWatchingWorks {
+  viewer {
+    works(state: WATCHING){
+      nodes {
+        title
+      }
+    }
+  }
+}
+
+query GetOnHoldWorks {
+  viewer {
+    works(state: WATCHING){
+      nodes {
+        title
+      }
+    }
+  }
+}
