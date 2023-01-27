@@ -8,6 +8,49 @@ import (
 	"github.com/Khan/genqlient/graphql"
 )
 
+// GetOnHoldWorksResponse is returned by GetOnHoldWorks on success.
+type GetOnHoldWorksResponse struct {
+	Viewer GetOnHoldWorksViewerUser `json:"viewer"`
+}
+
+// GetViewer returns GetOnHoldWorksResponse.Viewer, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksResponse) GetViewer() GetOnHoldWorksViewerUser { return v.Viewer }
+
+// GetOnHoldWorksViewerUser includes the requested fields of the GraphQL type User.
+type GetOnHoldWorksViewerUser struct {
+	Works GetOnHoldWorksViewerUserWorksWorkConnection `json:"works"`
+}
+
+// GetWorks returns GetOnHoldWorksViewerUser.Works, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksViewerUser) GetWorks() GetOnHoldWorksViewerUserWorksWorkConnection {
+	return v.Works
+}
+
+// GetOnHoldWorksViewerUserWorksWorkConnection includes the requested fields of the GraphQL type WorkConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Work.
+type GetOnHoldWorksViewerUserWorksWorkConnection struct {
+	// A list of nodes.
+	Nodes []GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork `json:"nodes"`
+}
+
+// GetNodes returns GetOnHoldWorksViewerUserWorksWorkConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksViewerUserWorksWorkConnection) GetNodes() []GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork {
+	return v.Nodes
+}
+
+// GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork includes the requested fields of the GraphQL type Work.
+// The GraphQL type's documentation follows.
+//
+// An anime title
+type GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork struct {
+	Title string `json:"title"`
+}
+
+// GetTitle returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
+
 // GetWannaWatchWorksResponse is returned by GetWannaWatchWorks on success.
 type GetWannaWatchWorksResponse struct {
 	Viewer GetWannaWatchWorksViewerUser `json:"viewer"`
@@ -51,6 +94,81 @@ type GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork struct {
 // GetTitle returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
 func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
 
+// GetWatchingWorksResponse is returned by GetWatchingWorks on success.
+type GetWatchingWorksResponse struct {
+	Viewer GetWatchingWorksViewerUser `json:"viewer"`
+}
+
+// GetViewer returns GetWatchingWorksResponse.Viewer, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksResponse) GetViewer() GetWatchingWorksViewerUser { return v.Viewer }
+
+// GetWatchingWorksViewerUser includes the requested fields of the GraphQL type User.
+type GetWatchingWorksViewerUser struct {
+	Works GetWatchingWorksViewerUserWorksWorkConnection `json:"works"`
+}
+
+// GetWorks returns GetWatchingWorksViewerUser.Works, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksViewerUser) GetWorks() GetWatchingWorksViewerUserWorksWorkConnection {
+	return v.Works
+}
+
+// GetWatchingWorksViewerUserWorksWorkConnection includes the requested fields of the GraphQL type WorkConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Work.
+type GetWatchingWorksViewerUserWorksWorkConnection struct {
+	// A list of nodes.
+	Nodes []GetWatchingWorksViewerUserWorksWorkConnectionNodesWork `json:"nodes"`
+}
+
+// GetNodes returns GetWatchingWorksViewerUserWorksWorkConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksViewerUserWorksWorkConnection) GetNodes() []GetWatchingWorksViewerUserWorksWorkConnectionNodesWork {
+	return v.Nodes
+}
+
+// GetWatchingWorksViewerUserWorksWorkConnectionNodesWork includes the requested fields of the GraphQL type Work.
+// The GraphQL type's documentation follows.
+//
+// An anime title
+type GetWatchingWorksViewerUserWorksWorkConnectionNodesWork struct {
+	Title string `json:"title"`
+}
+
+// GetTitle returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
+
+func GetOnHoldWorks(
+	ctx context.Context,
+	client graphql.Client,
+) (*GetOnHoldWorksResponse, error) {
+	req := &graphql.Request{
+		OpName: "GetOnHoldWorks",
+		Query: `
+query GetOnHoldWorks {
+	viewer {
+		works(state: WATCHING) {
+			nodes {
+				title
+			}
+		}
+	}
+}
+`,
+	}
+	var err error
+
+	var data GetOnHoldWorksResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
 func GetWannaWatchWorks(
 	ctx context.Context,
 	client graphql.Client,
@@ -72,6 +190,38 @@ query GetWannaWatchWorks {
 	var err error
 
 	var data GetWannaWatchWorksResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+func GetWatchingWorks(
+	ctx context.Context,
+	client graphql.Client,
+) (*GetWatchingWorksResponse, error) {
+	req := &graphql.Request{
+		OpName: "GetWatchingWorks",
+		Query: `
+query GetWatchingWorks {
+	viewer {
+		works(state: WATCHING) {
+			nodes {
+				title
+			}
+		}
+	}
+}
+`,
+	}
+	var err error
+
+	var data GetWatchingWorksResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
