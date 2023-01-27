@@ -76,7 +76,7 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string)
 			}
 			body := epgstation.PostRulesJSONRequestBody{
 				SearchOption: epgstation.RuleSearchOption{
-					GR: epgstation.NewFalsePointer(),
+					GR: epgstation.NewTruePointer(),
 					BS: epgstation.NewTruePointer(),
 
 					Keyword:     &title,
