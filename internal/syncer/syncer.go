@@ -102,9 +102,15 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string)
 }
 
 func (s *syncer) getRulesByKeyword(ctx context.Context, keyword string) ([]epgstation.RuleKeywordItem, error) {
-	r, _ := s.esClient.GetRulesKeyword(ctx, &epgstation.GetRulesKeywordParams{
+	r, err := s.esClient.GetRulesKeyword(ctx, &epgstation.GetRulesKeywordParams{
 		Keyword: &keyword,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if r.StatusCode != http.StatusOK {
+		return nil, nil
+	}
 	res, err := epgstation.ParseGetRulesKeywordResponse(r)
 	if err != nil {
 		return nil, err
