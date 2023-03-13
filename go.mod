@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/Khan/genqlient v0.5.0
 	github.com/deepmap/oapi-codegen v1.12.4
-	github.com/getkin/kin-openapi v0.112.0
+	github.com/getkin/kin-openapi v0.115.0
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/urfave/cli/v2 v2.23.7
 	golang.org/x/exp v0.0.0-20230310171629-522b1b587ee0
@@ -28,6 +28,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
+	github.com/perimeterx/marshmallow v1.1.4 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
