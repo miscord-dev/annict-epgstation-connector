@@ -79,10 +79,17 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string)
 					GR: epgstation.NewTruePointer(),
 					BS: epgstation.NewTruePointer(),
 
+					// Only search by title
 					Keyword:     &title,
-					Description: epgstation.NewTruePointer(),
 					Name:        epgstation.NewTruePointer(),
-					Extended:    epgstation.NewTruePointer(), // TODO(musaprg): is this really needed?
+					Description: epgstation.NewFalsePointer(),
+					Extended:    epgstation.NewFalsePointer(),
+
+					// https://github.com/l3tnun/EPGStation/blob/master/client/src/lib/event.ts
+					Genres: &[]epgstation.Genre{
+						{Genre: 0x6}, // 0x6 = 映画
+						{Genre: 0x7}, // 0x7 = アニメ・特撮
+					},
 
 					Times: &[]epgstation.SearchTime{
 						{
