@@ -85,6 +85,12 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string)
 					Description: epgstation.NewFalsePointer(),
 					Extended:    epgstation.NewFalsePointer(),
 
+					// https://github.com/l3tnun/EPGStation/blob/master/client/src/lib/event.ts
+					Genres: &[]epgstation.Genre{
+						{Genre: 0x6}, // 0x6 = 映画
+						{Genre: 0x7}, // 0x7 = アニメ・特撮
+					},
+
 					Times: &[]epgstation.SearchTime{
 						{
 							// whole week
