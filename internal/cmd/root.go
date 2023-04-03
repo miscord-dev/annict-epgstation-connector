@@ -7,7 +7,6 @@ import (
 type flagName string
 
 var (
-	annictEndpointFlag     = flagName("annict-endpoint")
 	epgstationEndpointFlag = flagName("epgstation-endpoint")
 	annictAPITokenFlag     = flagName("annict-api-token")
 )
@@ -19,12 +18,6 @@ var rootCmd = &cli.App{
 		syncCmd,
 	},
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:     string(annictEndpointFlag),
-			Usage:    "An endpoint of annict GraphQL API server",
-			EnvVars:  []string{"ANNICT_ENDPOINT"},
-			Required: true,
-		},
 		&cli.StringFlag{
 			Name:     string(annictAPITokenFlag),
 			Usage:    "An API token of annict GraphQL API server",
