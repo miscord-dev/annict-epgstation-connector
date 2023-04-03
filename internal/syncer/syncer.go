@@ -79,10 +79,11 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string)
 					GR: epgstation.NewTruePointer(),
 					BS: epgstation.NewTruePointer(),
 
+					// Only search by title
 					Keyword:     &title,
-					Description: epgstation.NewTruePointer(),
 					Name:        epgstation.NewTruePointer(),
-					Extended:    epgstation.NewTruePointer(), // TODO(musaprg): is this really needed?
+					Description: epgstation.NewFalsePointer(),
+					Extended:    epgstation.NewFalsePointer(),
 
 					Times: &[]epgstation.SearchTime{
 						{
