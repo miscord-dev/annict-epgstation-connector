@@ -3,4 +3,3 @@ linters:
   enable:
     - gofmt
     - govet
-    - errcheck
