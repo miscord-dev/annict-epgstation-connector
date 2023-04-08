@@ -1,0 +1,12 @@
+name: reviewdog
+on: [pull_request]
+jobs:
+  staticcheck:
+    name: runner / staticcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: reviewdog/action-staticcheck@v1
+        with:
+          filter_mode: diff_context
+          fail_on_error: true
