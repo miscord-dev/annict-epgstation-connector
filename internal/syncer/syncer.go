@@ -104,7 +104,7 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string)
 				SaveOption:          &epgstation.ReserveSaveOption{},
 				EncodeOption:        &epgstation.ReserveEncodedOption{},
 				ReserveOption: epgstation.RuleReserveOption{
-					AvoidDuplicate: true,
+					AvoidDuplicate: false,
 					Enable:         true,
 					AllowEndLack:   false,
 				},
