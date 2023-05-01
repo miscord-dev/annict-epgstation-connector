@@ -7,7 +7,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.12.4
 	github.com/getkin/kin-openapi v0.115.0
 	github.com/labstack/echo/v4 v4.10.2
-	github.com/urfave/cli/v2 v2.25.2
+	github.com/urfave/cli/v2 v2.25.3
 	golang.org/x/exp v0.0.0-20230419192730-864b3d6c5c2c
 	golang.org/x/sync v0.1.0
 )
