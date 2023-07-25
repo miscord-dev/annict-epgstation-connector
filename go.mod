@@ -8,7 +8,7 @@ require (
 	github.com/getkin/kin-openapi v0.118.0
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/urfave/cli/v2 v2.25.7
-	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
+	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
 	golang.org/x/sync v0.3.0
 )
 
