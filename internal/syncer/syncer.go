@@ -8,6 +8,7 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"github.com/musaprg/annict-epgstation-connector/annict"
 	"github.com/musaprg/annict-epgstation-connector/epgstation"
+	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 )
@@ -19,12 +20,16 @@ type Interface interface {
 type syncer struct {
 	annictClient graphql.Client
 	esClient     *epgstation.Client
+	cleanup      bool
+	logger       *zap.Logger
 }
 
 type SyncerOpt struct {
 	AnnictEndpoint     string
 	AnnictAPIToken     string
 	EPGStationEndpoint string
+	Cleanup            bool
+	Debug              bool
 }
 
 func NewSyncer(opts *SyncerOpt) (Interface, error) {
@@ -34,9 +39,23 @@ func NewSyncer(opts *SyncerOpt) (Interface, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Syncer: %w", err)
 	}
+	var logger *zap.Logger
+	if opts.Debug {
+		logger, err = zap.NewDevelopment()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize logger: %w", err)
+		}
+	} else {
+		logger, _ = zap.NewProduction()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize logger: %w", err)
+		}
+	}
 	return &syncer{
 		annictClient: annictClient,
 		esClient:     esClient,
+		cleanup:      opts.Cleanup,
+		logger:       logger,
 	}, nil
 }
 
@@ -66,13 +85,19 @@ func (s *syncer) Sync(ctx context.Context) error {
 }
 
 func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string) error {
-	eg, ctx := errgroup.WithContext(ctx)
+	eg, egCtx := errgroup.WithContext(ctx)
 	for _, title := range titles {
 		title := title
 		eg.Go(func() error {
-			if rules, _ := s.getRulesByKeyword(ctx, title); len(rules) != 0 {
-				// TODO(musaprg): output log message about skipping registeration of rule for this keyword
-				return nil
+			if rules, _ := s.getRulesByKeyword(egCtx, title); len(rules) != 0 {
+				s.logger.Debug("rule already exists", zap.String("title", title))
+				if s.cleanup {
+					if err := s.deleteRules(egCtx, rules); err != nil {
+						return fmt.Errorf("failed to delete rules: %w", err)
+					}
+				} else {
+					return nil
+				}
 			}
 			body := epgstation.PostRulesJSONRequestBody{
 				SearchOption: epgstation.RuleSearchOption{
@@ -113,12 +138,30 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string)
 			if err != nil {
 				return err
 			}
-			// TODO(musaprg): output response in the log message
+			s.logger.Info("registered rule", zap.String("title", title))
 			return nil
 		})
 	}
 	if err := eg.Wait(); err != nil {
 		return fmt.Errorf("failed to register rules into EPGStation: %w", err)
+	}
+	return nil
+}
+
+func (s *syncer) deleteRules(ctx context.Context, rules []epgstation.RuleKeywordItem) error {
+	eg, ctx := errgroup.WithContext(ctx)
+	for _, rule := range rules {
+		rule := rule
+		eg.Go(func() error {
+			_, err := s.esClient.DeleteRulesRuleId(ctx, rule.Id)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return fmt.Errorf("failed to delete rules: %w", err)
 	}
 	return nil
 }
