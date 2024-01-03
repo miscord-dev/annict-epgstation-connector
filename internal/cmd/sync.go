@@ -37,12 +37,20 @@ var syncCmd = &cli.Command{
 			Usage: "listen address of metrics",
 			Value: ":8080",
 		},
+		// db path
+		&cli.StringFlag{
+			Name:    "db-path",
+			Aliases: []string{"db"},
+			Usage:   "path to the database",
+			Value:   "/tmp/annict-epgstation-connector",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		s, err := syncer.NewSyncer(
 			syncer.WithAnnictAPIToken(c.String(string(annictAPITokenFlag))),
 			syncer.WithAnnictEndpoint(annictEndpoint),
 			syncer.WithEPGStationEndpoint(c.String(string(epgstationEndpointFlag))),
+			syncer.WithDBPath(c.String("db-path")),
 		)
 		if err != nil {
 			return err

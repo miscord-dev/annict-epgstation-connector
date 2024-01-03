@@ -13,6 +13,7 @@ import (
 	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -20,7 +21,7 @@ import (
 const (
 	defaultAnnictEndpoint     = "https://api.annict.com/graphql"
 	defaultEPGStationEndpoint = "http://localhost:8888/api"
-	defaultDBPath             = "/var/lib/annict-epgstation-connector/db"
+	defaultDBPath             = ""
 )
 
 type Interface interface {
@@ -37,6 +38,7 @@ type options struct {
 	AnnictEndpoint     string
 	AnnictAPIToken     string
 	EPGStationEndpoint string
+	DBPath             string
 }
 
 type Option func(*options)
@@ -59,17 +61,25 @@ func WithEPGStationEndpoint(endpoint string) Option {
 	}
 }
 
+func WithDBPath(path string) Option {
+	return func(o *options) {
+		o.DBPath = path
+	}
+}
+
 func NewSyncer(opts ...Option) (Interface, error) {
 	o := options{
 		AnnictEndpoint:     defaultAnnictEndpoint,
 		AnnictAPIToken:     "",
 		EPGStationEndpoint: defaultEPGStationEndpoint,
+		DBPath:             defaultDBPath,
 	}
 	for _, opt := range opts {
 		opt(&o)
 	}
 
-	db, err := pebble.Open(defaultDBPath, nil)
+	dbPath := filepath.Join(o.DBPath, "db")
+	db, err := pebble.Open(dbPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize DB for Syncer: %w", err)
 	}

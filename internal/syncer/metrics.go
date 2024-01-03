@@ -12,6 +12,7 @@ func init() {
 	prometheus.MustRegister(syncerSyncDuration)
 	prometheus.MustRegister(syncerSyncSuccess)
 	prometheus.MustRegister(syncerSyncError)
+	prometheus.MustRegister(syncerRecordingRuleSynced)
 }
 
 var (
