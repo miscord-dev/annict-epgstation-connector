@@ -12,6 +12,11 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const (
+	defaultAnnictEndpoint     = "https://api.annict.com/graphql"
+	defaultEPGStationEndpoint = "http://localhost:8888/api"
+)
+
 type Interface interface {
 	Sync(context.Context) error
 }
@@ -21,16 +26,45 @@ type syncer struct {
 	esClient     *epgstation.Client
 }
 
-type SyncerOpt struct {
+type options struct {
 	AnnictEndpoint     string
 	AnnictAPIToken     string
 	EPGStationEndpoint string
 }
 
-func NewSyncer(opts *SyncerOpt) (Interface, error) {
-	annictClient := graphql.NewClient(opts.AnnictEndpoint,
-		&http.Client{Transport: annict.NewAuthedTransport(opts.AnnictAPIToken, http.DefaultTransport)})
-	esClient, err := epgstation.NewClient(opts.EPGStationEndpoint)
+type Option func(*options)
+
+func WithAnnictEndpoint(endpoint string) Option {
+	return func(o *options) {
+		o.AnnictEndpoint = endpoint
+	}
+}
+
+func WithAnnictAPIToken(token string) Option {
+	return func(o *options) {
+		o.AnnictAPIToken = token
+	}
+}
+
+func WithEPGStationEndpoint(endpoint string) Option {
+	return func(o *options) {
+		o.EPGStationEndpoint = endpoint
+	}
+}
+
+func NewSyncer(opts ...Option) (Interface, error) {
+	o := options{
+		AnnictEndpoint:     defaultAnnictEndpoint,
+		AnnictAPIToken:     "",
+		EPGStationEndpoint: defaultEPGStationEndpoint,
+	}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	annictClient := graphql.NewClient(o.AnnictEndpoint,
+		&http.Client{Transport: annict.NewAuthedTransport(o.AnnictAPIToken, http.DefaultTransport)})
+	esClient, err := epgstation.NewClient(o.EPGStationEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Syncer: %w", err)
 	}

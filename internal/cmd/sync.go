@@ -13,11 +13,11 @@ var syncCmd = &cli.Command{
 	Name:  "sync",
 	Usage: "sync",
 	Action: func(c *cli.Context) error {
-		s, err := syncer.NewSyncer(&syncer.SyncerOpt{
-			AnnictEndpoint:     annictEndpoint,
-			EPGStationEndpoint: c.String(string(epgstationEndpointFlag)),
-			AnnictAPIToken:     c.String(string(annictAPITokenFlag)),
-		})
+		s, err := syncer.NewSyncer(
+			syncer.WithAnnictAPIToken(c.String(string(annictAPITokenFlag))),
+			syncer.WithAnnictEndpoint(annictEndpoint),
+			syncer.WithEPGStationEndpoint(c.String(string(epgstationEndpointFlag))),
+		)
 		if err != nil {
 			return err
 		}
