@@ -11,6 +11,7 @@ import (
 	"github.com/musaprg/annict-epgstation-connector/annict"
 	"github.com/musaprg/annict-epgstation-connector/epgstation"
 	"golang.org/x/exp/slices"
+	"golang.org/x/exp/slog"
 	"golang.org/x/sync/errgroup"
 	"net/http"
 	"path/filepath"
@@ -149,17 +150,20 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, works []annictWo
 		eg.Go(func() error {
 			ruleIDs, err := s.getRecordingRuleIDsByAnnictWorkID(work.ID)
 			switch {
-			case errors.Is(err, pebble.ErrNotFound):
-				// no recording rule IDs found for the given Annict work ID
-				// continue to create a new recording rule
-				break
-			case err != nil:
+			case err != nil && !errors.Is(err, pebble.ErrNotFound):
 				return fmt.Errorf("failed to get recording rule IDs for Annict work ID %s: %w", work.ID, err)
 			case err == nil:
 				// recording rule IDs found for the given Annict work ID
 				for _, id := range ruleIDs {
 					syncerRecordingRuleSynced.WithLabelValues(strconv.Itoa(int(id)), work.ID).Set(1)
 				}
+				return nil
+			}
+			if rules, _ := s.getRulesByKeyword(ctx, work.Title); len(rules) != 0 {
+				// recording rule with same keyword has already been registered
+				// skip registration
+				// TODO: Remove this logic after introducing cleanup logic
+				slog.Info("recording rule with same keyword has already been registered", slog.String("keyword", work.Title))
 				return nil
 			}
 			body := epgstation.PostRulesJSONRequestBody{
