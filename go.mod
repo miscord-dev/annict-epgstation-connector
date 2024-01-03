@@ -6,7 +6,7 @@ toolchain go1.21.1
 
 require (
 	github.com/Khan/genqlient v0.6.0
-	github.com/deepmap/oapi-codegen v1.16.2
+	github.com/deepmap/oapi-codegen/v2 v2.0.0
 	github.com/deepmap/oapi-codegen/v2 v2.0.0
 	github.com/getkin/kin-openapi v0.120.0
 	github.com/labstack/echo/v4 v4.11.4
