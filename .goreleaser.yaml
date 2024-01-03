@@ -11,6 +11,9 @@ builds:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+      - arm64
     main: ./cmd/annict-epgstation-connector/main.go
 
 archives:
