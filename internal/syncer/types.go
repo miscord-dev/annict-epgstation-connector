@@ -6,3 +6,7 @@ type annictWork struct {
 	SeasonYear int
 	Title      string
 }
+
+type RecordingRuleID int
+
+type RecordingRuleIDs []RecordingRuleID
