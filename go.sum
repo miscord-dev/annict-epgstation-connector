@@ -70,6 +70,7 @@ github.com/deepmap/oapi-codegen v1.14.0 h1:b51/kQwH69rjN5pu+8j/Q5fUGD/rUclLAcGLQ
 github.com/deepmap/oapi-codegen v1.14.0/go.mod h1:QcEpzjVDwJEH3Fq6I7XYkI0M/JwvoL82ToYveaeVMAw=
 github.com/deepmap/oapi-codegen v1.16.2 h1:xGHx0dNqYfy9gE8a7AVgVM8Sd5oF9SEgePzP+UPAUXI=
 github.com/deepmap/oapi-codegen v1.16.2/go.mod h1:rdYoEA2GE+riuZ91DvpmBX9hJbQpuY9wchXpfQ3n+ho=
+github.com/deepmap/oapi-codegen/v2 v2.0.0/go.mod h1:7zR+ZL3WzLeCkr2k8oWTxEa0v8y/F25ane0l6A5UjLA=
 github.com/dgryski/trifles v0.0.0-20200323201526-dd97f9abfb48 h1:fRzb/w+pyskVMQ+UbP35JkH8yB7MYb4q/qhBarqZE6g=
 github.com/dgryski/trifles v0.0.0-20200323201526-dd97f9abfb48/go.mod h1:if7Fbed8SFyPtHLHbg49SI7NAdJiC5WIA09pe59rfAA=
 github.com/fatih/structs v1.1.0 h1:Q7juDM0QtcnhCpeyLGQKyg4TOIghuNXrkL32pHAUMxo=
