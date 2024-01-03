@@ -75,7 +75,7 @@ func NewSyncer(opts ...Option) (Interface, error) {
 }
 
 func (s *syncer) Sync(ctx context.Context) error {
-	titles := []string{}
+	var titles []annictWork
 	if ts, err := s.getWannaWatchWorks(ctx); err != nil {
 		return err
 	} else {
@@ -99,12 +99,12 @@ func (s *syncer) Sync(ctx context.Context) error {
 	return nil
 }
 
-func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string) error {
+func (s *syncer) registerRulesToEpgStation(ctx context.Context, works []annictWork) error {
 	eg, ctx := errgroup.WithContext(ctx)
-	for _, title := range titles {
-		title := title
+	for _, work := range works {
+		work := work
 		eg.Go(func() error {
-			if rules, _ := s.getRulesByKeyword(ctx, title); len(rules) != 0 {
+			if rules, _ := s.getRulesByKeyword(ctx, work.Title); len(rules) != 0 {
 				// TODO(musaprg): output log message about skipping registeration of rule for this keyword
 				return nil
 			}
@@ -113,8 +113,8 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, titles []string)
 					GR: epgstation.NewTruePointer(),
 					BS: epgstation.NewTruePointer(),
 
-					// Only search by title
-					Keyword:     &title,
+					// Only search by work
+					Keyword:     &work.Title,
 					Name:        epgstation.NewTruePointer(),
 					Description: epgstation.NewFalsePointer(),
 					Extended:    epgstation.NewFalsePointer(),
@@ -174,38 +174,53 @@ func (s *syncer) getRulesByKeyword(ctx context.Context, keyword string) ([]epgst
 	return res.JSON200.Items, nil
 }
 
-func (s *syncer) getWannaWatchWorks(ctx context.Context) ([]string, error) {
-	var titles []string
+func (s *syncer) getWannaWatchWorks(ctx context.Context) ([]annictWork, error) {
+	var titles []annictWork
 	r, err := annict.GetWannaWatchWorks(ctx, s.annictClient)
 	if err != nil {
 		return titles, fmt.Errorf("failed to sync: %w", err)
 	}
 	for _, n := range r.Viewer.Works.Nodes {
-		titles = append(titles, n.Title)
+		titles = append(titles, annictWork{
+			ID:         n.Id,
+			Title:      n.Title,
+			SeasonName: string(n.SeasonName),
+			SeasonYear: n.SeasonYear,
+		})
 	}
 	return titles, nil
 }
 
-func (s *syncer) getWatchingWorks(ctx context.Context) ([]string, error) {
-	var titles []string
+func (s *syncer) getWatchingWorks(ctx context.Context) ([]annictWork, error) {
+	var titles []annictWork
 	r, err := annict.GetWatchingWorks(ctx, s.annictClient)
 	if err != nil {
 		return titles, fmt.Errorf("failed to sync: %w", err)
 	}
 	for _, n := range r.Viewer.Works.Nodes {
-		titles = append(titles, n.Title)
+		titles = append(titles, annictWork{
+			ID:         n.Id,
+			Title:      n.Title,
+			SeasonName: string(n.SeasonName),
+			SeasonYear: n.SeasonYear,
+		})
 	}
 	return titles, nil
 }
 
-func (s *syncer) getOnHoldWorks(ctx context.Context) ([]string, error) {
-	var titles []string
+func (s *syncer) getOnHoldWorks(ctx context.Context) ([]annictWork, error) {
+	var titles []annictWork
 	r, err := annict.GetOnHoldWorks(ctx, s.annictClient)
 	if err != nil {
 		return titles, fmt.Errorf("failed to sync: %w", err)
 	}
 	for _, n := range r.Viewer.Works.Nodes {
-		titles = append(titles, n.Title)
+		titles = append(titles, annictWork{
+			ID:         n.Id,
+			Title:      n.Title,
+			SeasonName: string(n.SeasonName),
+			SeasonYear: n.SeasonYear,
+		})
 	}
 	return titles, nil
 }
