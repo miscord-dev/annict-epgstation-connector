@@ -2,7 +2,10 @@ query GetWannaWatchWorks {
   viewer {
     works(state: WANNA_WATCH){
       nodes {
+        id
         title
+        seasonName
+        seasonYear
       }
     }
   }
@@ -12,7 +15,10 @@ query GetWatchingWorks {
   viewer {
     works(state: WATCHING){
       nodes {
+        id
         title
+        seasonName
+        seasonYear
       }
     }
   }
@@ -22,7 +28,10 @@ query GetOnHoldWorks {
   viewer {
     works(state: WATCHING){
       nodes {
+        id
         title
+        seasonName
+        seasonYear
       }
     }
   }

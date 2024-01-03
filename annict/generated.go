@@ -45,11 +45,27 @@ func (v *GetOnHoldWorksViewerUserWorksWorkConnection) GetNodes() []GetOnHoldWork
 //
 // An anime title
 type GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork struct {
-	Title string `json:"title"`
+	Id         string     `json:"id"`
+	Title      string     `json:"title"`
+	SeasonName SeasonName `json:"seasonName"`
+	SeasonYear int        `json:"seasonYear"`
 }
+
+// GetId returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.Id, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetId() string { return v.Id }
 
 // GetTitle returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
 func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
+
+// GetSeasonName returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.SeasonName, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonName() SeasonName {
+	return v.SeasonName
+}
+
+// GetSeasonYear returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.SeasonYear, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonYear() int {
+	return v.SeasonYear
+}
 
 // GetWannaWatchWorksResponse is returned by GetWannaWatchWorks on success.
 type GetWannaWatchWorksResponse struct {
@@ -88,11 +104,27 @@ func (v *GetWannaWatchWorksViewerUserWorksWorkConnection) GetNodes() []GetWannaW
 //
 // An anime title
 type GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork struct {
-	Title string `json:"title"`
+	Id         string     `json:"id"`
+	Title      string     `json:"title"`
+	SeasonName SeasonName `json:"seasonName"`
+	SeasonYear int        `json:"seasonYear"`
 }
+
+// GetId returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.Id, and is useful for accessing the field via an interface.
+func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetId() string { return v.Id }
 
 // GetTitle returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
 func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
+
+// GetSeasonName returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.SeasonName, and is useful for accessing the field via an interface.
+func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonName() SeasonName {
+	return v.SeasonName
+}
+
+// GetSeasonYear returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.SeasonYear, and is useful for accessing the field via an interface.
+func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonYear() int {
+	return v.SeasonYear
+}
 
 // GetWatchingWorksResponse is returned by GetWatchingWorks on success.
 type GetWatchingWorksResponse struct {
@@ -131,11 +163,53 @@ func (v *GetWatchingWorksViewerUserWorksWorkConnection) GetNodes() []GetWatching
 //
 // An anime title
 type GetWatchingWorksViewerUserWorksWorkConnectionNodesWork struct {
-	Title string `json:"title"`
+	Id         string     `json:"id"`
+	Title      string     `json:"title"`
+	SeasonName SeasonName `json:"seasonName"`
+	SeasonYear int        `json:"seasonYear"`
 }
+
+// GetId returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.Id, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetId() string { return v.Id }
 
 // GetTitle returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
 func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
+
+// GetSeasonName returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.SeasonName, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonName() SeasonName {
+	return v.SeasonName
+}
+
+// GetSeasonYear returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.SeasonYear, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonYear() int {
+	return v.SeasonYear
+}
+
+// Season name
+type SeasonName string
+
+const (
+	SeasonNameWinter SeasonName = "WINTER"
+	SeasonNameSpring SeasonName = "SPRING"
+	SeasonNameSummer SeasonName = "SUMMER"
+	SeasonNameAutumn SeasonName = "AUTUMN"
+)
+
+// The query or mutation executed by GetOnHoldWorks.
+const GetOnHoldWorks_Operation = `
+query GetOnHoldWorks {
+	viewer {
+		works(state: WATCHING) {
+			nodes {
+				id
+				title
+				seasonName
+				seasonYear
+			}
+		}
+	}
+}
+`
 
 func GetOnHoldWorks(
 	ctx context.Context,
@@ -143,17 +217,7 @@ func GetOnHoldWorks(
 ) (*GetOnHoldWorksResponse, error) {
 	req := &graphql.Request{
 		OpName: "GetOnHoldWorks",
-		Query: `
-query GetOnHoldWorks {
-	viewer {
-		works(state: WATCHING) {
-			nodes {
-				title
-			}
-		}
-	}
-}
-`,
+		Query:  GetOnHoldWorks_Operation,
 	}
 	var err error
 
@@ -169,23 +233,29 @@ query GetOnHoldWorks {
 	return &data, err
 }
 
+// The query or mutation executed by GetWannaWatchWorks.
+const GetWannaWatchWorks_Operation = `
+query GetWannaWatchWorks {
+	viewer {
+		works(state: WANNA_WATCH) {
+			nodes {
+				id
+				title
+				seasonName
+				seasonYear
+			}
+		}
+	}
+}
+`
+
 func GetWannaWatchWorks(
 	ctx context.Context,
 	client graphql.Client,
 ) (*GetWannaWatchWorksResponse, error) {
 	req := &graphql.Request{
 		OpName: "GetWannaWatchWorks",
-		Query: `
-query GetWannaWatchWorks {
-	viewer {
-		works(state: WANNA_WATCH) {
-			nodes {
-				title
-			}
-		}
-	}
-}
-`,
+		Query:  GetWannaWatchWorks_Operation,
 	}
 	var err error
 
@@ -201,23 +271,29 @@ query GetWannaWatchWorks {
 	return &data, err
 }
 
+// The query or mutation executed by GetWatchingWorks.
+const GetWatchingWorks_Operation = `
+query GetWatchingWorks {
+	viewer {
+		works(state: WATCHING) {
+			nodes {
+				id
+				title
+				seasonName
+				seasonYear
+			}
+		}
+	}
+}
+`
+
 func GetWatchingWorks(
 	ctx context.Context,
 	client graphql.Client,
 ) (*GetWatchingWorksResponse, error) {
 	req := &graphql.Request{
 		OpName: "GetWatchingWorks",
-		Query: `
-query GetWatchingWorks {
-	viewer {
-		works(state: WATCHING) {
-			nodes {
-				title
-			}
-		}
-	}
-}
-`,
+		Query:  GetWatchingWorks_Operation,
 	}
 	var err error
 
