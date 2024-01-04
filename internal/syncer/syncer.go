@@ -252,7 +252,7 @@ func (s *syncer) getWannaWatchWorks(ctx context.Context) ([]annictWork, error) {
 	}
 	for _, n := range r.Viewer.Works.Nodes {
 		titles = append(titles, annictWork{
-			ID:         n.Id,
+			ID:         strconv.Itoa(n.AnnictId),
 			Title:      n.Title,
 			SeasonName: string(n.SeasonName),
 			SeasonYear: n.SeasonYear,
@@ -269,7 +269,7 @@ func (s *syncer) getWatchingWorks(ctx context.Context) ([]annictWork, error) {
 	}
 	for _, n := range r.Viewer.Works.Nodes {
 		titles = append(titles, annictWork{
-			ID:         n.Id,
+			ID:         strconv.Itoa(n.AnnictId),
 			Title:      n.Title,
 			SeasonName: string(n.SeasonName),
 			SeasonYear: n.SeasonYear,
@@ -286,7 +286,7 @@ func (s *syncer) getOnHoldWorks(ctx context.Context) ([]annictWork, error) {
 	}
 	for _, n := range r.Viewer.Works.Nodes {
 		titles = append(titles, annictWork{
-			ID:         n.Id,
+			ID:         strconv.Itoa(n.AnnictId),
 			Title:      n.Title,
 			SeasonName: string(n.SeasonName),
 			SeasonYear: n.SeasonYear,

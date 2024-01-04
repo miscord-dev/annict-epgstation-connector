@@ -46,15 +46,15 @@ func (v *GetOnHoldWorksViewerUserWorksWorkConnection) GetNodes() []GetOnHoldWork
 //
 // An anime title
 type GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork struct {
-	Id         string                                                                        `json:"id"`
+	AnnictId   int                                                                           `json:"annictId"`
 	Title      string                                                                        `json:"title"`
 	SeasonName SeasonName                                                                    `json:"seasonName"`
 	SeasonYear int                                                                           `json:"seasonYear"`
 	Programs   GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection `json:"programs"`
 }
 
-// GetId returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.Id, and is useful for accessing the field via an interface.
-func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetId() string { return v.Id }
+// GetAnnictId returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.AnnictId, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetAnnictId() int { return v.AnnictId }
 
 // GetTitle returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
 func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
@@ -135,15 +135,17 @@ func (v *GetWannaWatchWorksViewerUserWorksWorkConnection) GetNodes() []GetWannaW
 //
 // An anime title
 type GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork struct {
-	Id         string                                                                            `json:"id"`
+	AnnictId   int                                                                               `json:"annictId"`
 	Title      string                                                                            `json:"title"`
 	SeasonName SeasonName                                                                        `json:"seasonName"`
 	SeasonYear int                                                                               `json:"seasonYear"`
 	Programs   GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection `json:"programs"`
 }
 
-// GetId returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.Id, and is useful for accessing the field via an interface.
-func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetId() string { return v.Id }
+// GetAnnictId returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.AnnictId, and is useful for accessing the field via an interface.
+func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetAnnictId() int {
+	return v.AnnictId
+}
 
 // GetTitle returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
 func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
@@ -224,15 +226,15 @@ func (v *GetWatchingWorksViewerUserWorksWorkConnection) GetNodes() []GetWatching
 //
 // An anime title
 type GetWatchingWorksViewerUserWorksWorkConnectionNodesWork struct {
-	Id         string                                                                          `json:"id"`
+	AnnictId   int                                                                             `json:"annictId"`
 	Title      string                                                                          `json:"title"`
 	SeasonName SeasonName                                                                      `json:"seasonName"`
 	SeasonYear int                                                                             `json:"seasonYear"`
 	Programs   GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection `json:"programs"`
 }
 
-// GetId returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.Id, and is useful for accessing the field via an interface.
-func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetId() string { return v.Id }
+// GetAnnictId returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.AnnictId, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetAnnictId() int { return v.AnnictId }
 
 // GetTitle returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
 func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
@@ -292,7 +294,7 @@ query GetOnHoldWorks {
 	viewer {
 		works(state: WATCHING) {
 			nodes {
-				id
+				annictId
 				title
 				seasonName
 				seasonYear
@@ -335,7 +337,7 @@ query GetWannaWatchWorks {
 	viewer {
 		works(state: WANNA_WATCH) {
 			nodes {
-				id
+				annictId
 				title
 				seasonName
 				seasonYear
@@ -378,7 +380,7 @@ query GetWatchingWorks {
 	viewer {
 		works(state: WATCHING) {
 			nodes {
-				id
+				annictId
 				title
 				seasonName
 				seasonYear
