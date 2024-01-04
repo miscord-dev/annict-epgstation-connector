@@ -71,7 +71,7 @@ var (
 			Namespace: namespace,
 			Subsystem: "syncer",
 			Name:      "annict_work_started_at",
-			Help:      "The time when the annict work is going to start or started broadcasting.",
+			Help:      "The Unix timestamp when the annict work is going to start or started broadcasting.",
 		},
 		[]string{
 			"id",
