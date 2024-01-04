@@ -10,9 +10,8 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/musaprg/annict-epgstation-connector/annict"
 	"github.com/musaprg/annict-epgstation-connector/epgstation"
-	"golang.org/x/exp/slices"
+	"go.uber.org/multierr"
 	"golang.org/x/exp/slog"
-	"golang.org/x/sync/errgroup"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -135,102 +134,102 @@ func (s *syncer) sync(ctx context.Context) error {
 	} else {
 		titles = append(titles, ts...)
 	}
-	slices.Compact(titles)
 
-	if err := s.registerRulesToEpgStation(ctx, titles); err != nil {
+	if err := s.registerRulesToEPGStation(ctx, titles); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *syncer) registerRulesToEpgStation(ctx context.Context, works []annictWork) error {
-	eg, ctx := errgroup.WithContext(ctx)
+func (s *syncer) registerRulesToEPGStation(ctx context.Context, works []annictWork) error {
+	var errs error
 	for _, work := range works {
-		work := work
-		eg.Go(func() error {
-			syncerAnnictWorkStartedAt.WithLabelValues(
-				work.ID,
-				work.Title,
-				work.SeasonName,
-				strconv.Itoa(work.SeasonYear),
-			).Set(float64(work.StartedAt.Unix()))
-
-			ruleIDs, err := s.getRecordingRuleIDsByAnnictWorkID(work.ID)
-			switch {
-			case err != nil && !errors.Is(err, pebble.ErrNotFound):
-				return fmt.Errorf("failed to get recording rule IDs for Annict work ID %s: %w", work.ID, err)
-			case err == nil:
-				// recording rule IDs found for the given Annict work ID
-				for _, id := range ruleIDs {
-					syncerRecordingRuleSynced.WithLabelValues(strconv.Itoa(int(id)), work.ID).Set(1)
-				}
-				return nil
-			}
-			if rules, _ := s.getRulesByKeyword(ctx, work.Title); len(rules) != 0 {
-				// recording rule with same keyword has already been registered
-				// skip registration
-				// TODO: Remove this logic after introducing cleanup logic
-				slog.Debug("recording rule with same keyword has already been registered", slog.String("keyword", work.Title))
-				return nil
-			}
-			body := epgstation.PostRulesJSONRequestBody{
-				SearchOption: epgstation.RuleSearchOption{
-					GR: epgstation.NewTruePointer(),
-					BS: epgstation.NewTruePointer(),
-
-					// Only search by work
-					Keyword:     &work.Title,
-					Name:        epgstation.NewTruePointer(),
-					Description: epgstation.NewFalsePointer(),
-					Extended:    epgstation.NewFalsePointer(),
-
-					// https://github.com/l3tnun/EPGStation/blob/master/client/src/lib/event.ts
-					Genres: &[]epgstation.Genre{
-						{Genre: 0x6}, // 0x6 = 映画
-						{Genre: 0x7}, // 0x7 = アニメ・特撮
-					},
-
-					Times: &[]epgstation.SearchTime{
-						{
-							// whole week
-							Week: 0b1111111,
-						},
-					},
-
-					IsFree: epgstation.NewTruePointer(), // TODO(musaprg): how about NHK?
-				},
-				IsTimeSpecification: false,
-				SaveOption:          &epgstation.ReserveSaveOption{},
-				EncodeOption:        &epgstation.ReserveEncodedOption{},
-				ReserveOption: epgstation.RuleReserveOption{
-					AvoidDuplicate: false,
-					Enable:         true,
-					AllowEndLack:   false,
-				},
-			}
-			r, err := s.esClient.PostRules(ctx, body)
-			if err != nil {
-				return err
-			}
-			res, err := epgstation.ParsePostRulesResponse(r)
-			if err != nil {
-				return err
-			}
-			if res.JSON201 == nil {
-				return fmt.Errorf("failed to register rules into EPGStation: %s", res.Body)
-			}
-			ids := RecordingRuleIDs{RecordingRuleID(res.JSON201.RuleId)}
-			if err := s.setRecordingRuleIDsByAnnictWorkID(work.ID, ids); err != nil {
-				return err
-			}
-			syncerRecordingRuleSynced.WithLabelValues(strconv.Itoa(int(ids[0])), work.ID).Set(1)
-			// TODO(musaprg): output response in the log message
-			return nil
-		})
+		errs = multierr.Append(errs, s.registerRuleToEPGStation(ctx, work))
 	}
-	if err := eg.Wait(); err != nil {
-		return fmt.Errorf("failed to register rules into EPGStation: %w", err)
+	if errs != nil {
+		return fmt.Errorf("failed to register rules into EPGStation: %w", errs)
 	}
+	return nil
+}
+
+func (s *syncer) registerRuleToEPGStation(ctx context.Context, work annictWork) error {
+	syncerAnnictWorkStartedAt.WithLabelValues(
+		work.ID,
+		work.Title,
+		work.SeasonName,
+		strconv.Itoa(work.SeasonYear),
+	).Set(float64(work.StartedAt.Unix()))
+
+	ruleIDs, err := s.getRecordingRuleIDsByAnnictWorkID(work.ID)
+	switch {
+	case err != nil && !errors.Is(err, pebble.ErrNotFound):
+		return fmt.Errorf("failed to get recording rule IDs for Annict work ID %s: %w", work.ID, err)
+	case err == nil:
+		// recording rule IDs found for the given Annict work ID
+		for _, id := range ruleIDs {
+			syncerRecordingRuleSynced.WithLabelValues(strconv.Itoa(int(id)), work.ID).Set(1)
+		}
+		return nil
+	}
+	if rules, _ := s.getRulesByKeyword(ctx, work.Title); len(rules) != 0 {
+		// recording rule with same keyword has already been registered
+		// skip registration
+		// TODO: Remove this logic after introducing cleanup logic
+		slog.Debug("recording rule with same keyword has already been registered", slog.String("keyword", work.Title))
+		return nil
+	}
+	body := epgstation.PostRulesJSONRequestBody{
+		SearchOption: epgstation.RuleSearchOption{
+			GR: epgstation.NewTruePointer(),
+			BS: epgstation.NewTruePointer(),
+
+			// Only search by work
+			Keyword:     &work.Title,
+			Name:        epgstation.NewTruePointer(),
+			Description: epgstation.NewFalsePointer(),
+			Extended:    epgstation.NewFalsePointer(),
+
+			// https://github.com/l3tnun/EPGStation/blob/master/client/src/lib/event.ts
+			Genres: &[]epgstation.Genre{
+				{Genre: 0x6}, // 0x6 = 映画
+				{Genre: 0x7}, // 0x7 = アニメ・特撮
+			},
+
+			Times: &[]epgstation.SearchTime{
+				{
+					// whole week
+					Week: 0b1111111,
+				},
+			},
+
+			IsFree: epgstation.NewTruePointer(), // TODO(musaprg): how about NHK?
+		},
+		IsTimeSpecification: false,
+		SaveOption:          &epgstation.ReserveSaveOption{},
+		EncodeOption:        &epgstation.ReserveEncodedOption{},
+		ReserveOption: epgstation.RuleReserveOption{
+			AvoidDuplicate: false,
+			Enable:         true,
+			AllowEndLack:   false,
+		},
+	}
+	r, err := s.esClient.PostRules(ctx, body)
+	if err != nil {
+		return err
+	}
+	res, err := epgstation.ParsePostRulesResponse(r)
+	if err != nil {
+		return err
+	}
+	if res.JSON201 == nil {
+		return fmt.Errorf("failed to register rules into EPGStation: %s", res.Body)
+	}
+	ids := RecordingRuleIDs{RecordingRuleID(res.JSON201.RuleId)}
+	if err := s.setRecordingRuleIDsByAnnictWorkID(work.ID, ids); err != nil {
+		return err
+	}
+	syncerRecordingRuleSynced.WithLabelValues(strconv.Itoa(int(ids[0])), work.ID).Set(1)
+	// TODO(musaprg): output response in the log message
 	return nil
 }
 
