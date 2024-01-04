@@ -170,7 +170,7 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, works []annictWo
 				// recording rule with same keyword has already been registered
 				// skip registration
 				// TODO: Remove this logic after introducing cleanup logic
-				slog.Info("recording rule with same keyword has already been registered", slog.String("keyword", work.Title))
+				slog.Debug("recording rule with same keyword has already been registered", slog.String("keyword", work.Title))
 				return nil
 			}
 			body := epgstation.PostRulesJSONRequestBody{
