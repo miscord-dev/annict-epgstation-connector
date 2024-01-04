@@ -148,6 +148,13 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, works []annictWo
 	for _, work := range works {
 		work := work
 		eg.Go(func() error {
+			syncerAnnictWorkStartedAt.WithLabelValues(
+				work.ID,
+				work.Title,
+				work.SeasonName,
+				strconv.Itoa(work.SeasonYear),
+			).Set(float64(work.StartedAt.Unix()))
+
 			ruleIDs, err := s.getRecordingRuleIDsByAnnictWorkID(work.ID)
 			switch {
 			case err != nil && !errors.Is(err, pebble.ErrNotFound):

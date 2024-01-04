@@ -13,6 +13,7 @@ func init() {
 	prometheus.MustRegister(syncerSyncSuccess)
 	prometheus.MustRegister(syncerSyncError)
 	prometheus.MustRegister(syncerRecordingRuleSynced)
+	prometheus.MustRegister(syncerAnnictWorkStartedAt)
 }
 
 var (
@@ -61,6 +62,22 @@ var (
 		[]string{
 			"rule_id",
 			"annict_work_id",
+		},
+	)
+
+	// syncerAnnictWorkStartedAt is a gauge of the time when the annict work is going to start or started broadcasting.
+	syncerAnnictWorkStartedAt = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: "syncer",
+			Name:      "annict_work_started_at",
+			Help:      "The time when the annict work is going to start or started broadcasting.",
+		},
+		[]string{
+			"id",
+			"title",
+			"season_name",
+			"season_year",
 		},
 	)
 )
