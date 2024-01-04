@@ -6,6 +6,11 @@ query GetWannaWatchWorks {
         title
         seasonName
         seasonYear
+        programs (first: 1) {
+          nodes {
+            startedAt
+          }
+        }
       }
     }
   }
@@ -19,6 +24,11 @@ query GetWatchingWorks {
         title
         seasonName
         seasonYear
+        programs (first: 1) {
+          nodes {
+            startedAt
+          }
+        }
       }
     }
   }
@@ -32,6 +42,11 @@ query GetOnHoldWorks {
         title
         seasonName
         seasonYear
+        programs (first: 1) {
+          nodes {
+            startedAt
+          }
+        }
       }
     }
   }
