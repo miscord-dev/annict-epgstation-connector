@@ -148,6 +148,13 @@ func (s *syncer) registerRulesToEpgStation(ctx context.Context, works []annictWo
 	for _, work := range works {
 		work := work
 		eg.Go(func() error {
+			syncerAnnictWorkStartedAt.WithLabelValues(
+				work.ID,
+				work.Title,
+				work.SeasonName,
+				strconv.Itoa(work.SeasonYear),
+			).Set(float64(work.StartedAt.Unix()))
+
 			ruleIDs, err := s.getRecordingRuleIDsByAnnictWorkID(work.ID)
 			switch {
 			case err != nil && !errors.Is(err, pebble.ErrNotFound):
@@ -251,11 +258,16 @@ func (s *syncer) getWannaWatchWorks(ctx context.Context) ([]annictWork, error) {
 		return titles, fmt.Errorf("failed to sync: %w", err)
 	}
 	for _, n := range r.Viewer.Works.Nodes {
+		var startedAt time.Time
+		if len(n.Programs.Nodes) != 0 {
+			startedAt = n.Programs.Nodes[0].StartedAt
+		}
 		titles = append(titles, annictWork{
-			ID:         n.Id,
+			ID:         strconv.Itoa(n.AnnictId),
 			Title:      n.Title,
 			SeasonName: string(n.SeasonName),
 			SeasonYear: n.SeasonYear,
+			StartedAt:  startedAt,
 		})
 	}
 	return titles, nil
@@ -268,11 +280,16 @@ func (s *syncer) getWatchingWorks(ctx context.Context) ([]annictWork, error) {
 		return titles, fmt.Errorf("failed to sync: %w", err)
 	}
 	for _, n := range r.Viewer.Works.Nodes {
+		var startedAt time.Time
+		if len(n.Programs.Nodes) != 0 {
+			startedAt = n.Programs.Nodes[0].StartedAt
+		}
 		titles = append(titles, annictWork{
-			ID:         n.Id,
+			ID:         strconv.Itoa(n.AnnictId),
 			Title:      n.Title,
 			SeasonName: string(n.SeasonName),
 			SeasonYear: n.SeasonYear,
+			StartedAt:  startedAt,
 		})
 	}
 	return titles, nil
@@ -285,11 +302,16 @@ func (s *syncer) getOnHoldWorks(ctx context.Context) ([]annictWork, error) {
 		return titles, fmt.Errorf("failed to sync: %w", err)
 	}
 	for _, n := range r.Viewer.Works.Nodes {
+		var startedAt time.Time
+		if len(n.Programs.Nodes) != 0 {
+			startedAt = n.Programs.Nodes[0].StartedAt
+		}
 		titles = append(titles, annictWork{
-			ID:         n.Id,
+			ID:         strconv.Itoa(n.AnnictId),
 			Title:      n.Title,
 			SeasonName: string(n.SeasonName),
 			SeasonYear: n.SeasonYear,
+			StartedAt:  startedAt,
 		})
 	}
 	return titles, nil

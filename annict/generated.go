@@ -4,6 +4,7 @@ package annict
 
 import (
 	"context"
+	"time"
 
 	"github.com/Khan/genqlient/graphql"
 )
@@ -45,14 +46,15 @@ func (v *GetOnHoldWorksViewerUserWorksWorkConnection) GetNodes() []GetOnHoldWork
 //
 // An anime title
 type GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork struct {
-	Id         string     `json:"id"`
-	Title      string     `json:"title"`
-	SeasonName SeasonName `json:"seasonName"`
-	SeasonYear int        `json:"seasonYear"`
+	AnnictId   int                                                                           `json:"annictId"`
+	Title      string                                                                        `json:"title"`
+	SeasonName SeasonName                                                                    `json:"seasonName"`
+	SeasonYear int                                                                           `json:"seasonYear"`
+	Programs   GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection `json:"programs"`
 }
 
-// GetId returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.Id, and is useful for accessing the field via an interface.
-func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetId() string { return v.Id }
+// GetAnnictId returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.AnnictId, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetAnnictId() int { return v.AnnictId }
 
 // GetTitle returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
 func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
@@ -65,6 +67,35 @@ func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonName() S
 // GetSeasonYear returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.SeasonYear, and is useful for accessing the field via an interface.
 func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonYear() int {
 	return v.SeasonYear
+}
+
+// GetPrograms returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork.Programs, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWork) GetPrograms() GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection {
+	return v.Programs
+}
+
+// GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection includes the requested fields of the GraphQL type ProgramConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Program.
+type GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection struct {
+	// A list of nodes.
+	Nodes []GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram `json:"nodes"`
+}
+
+// GetNodes returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection) GetNodes() []GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram {
+	return v.Nodes
+}
+
+// GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram includes the requested fields of the GraphQL type Program.
+type GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram struct {
+	StartedAt time.Time `json:"startedAt"`
+}
+
+// GetStartedAt returns GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram.StartedAt, and is useful for accessing the field via an interface.
+func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram) GetStartedAt() time.Time {
+	return v.StartedAt
 }
 
 // GetWannaWatchWorksResponse is returned by GetWannaWatchWorks on success.
@@ -104,14 +135,17 @@ func (v *GetWannaWatchWorksViewerUserWorksWorkConnection) GetNodes() []GetWannaW
 //
 // An anime title
 type GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork struct {
-	Id         string     `json:"id"`
-	Title      string     `json:"title"`
-	SeasonName SeasonName `json:"seasonName"`
-	SeasonYear int        `json:"seasonYear"`
+	AnnictId   int                                                                               `json:"annictId"`
+	Title      string                                                                            `json:"title"`
+	SeasonName SeasonName                                                                        `json:"seasonName"`
+	SeasonYear int                                                                               `json:"seasonYear"`
+	Programs   GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection `json:"programs"`
 }
 
-// GetId returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.Id, and is useful for accessing the field via an interface.
-func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetId() string { return v.Id }
+// GetAnnictId returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.AnnictId, and is useful for accessing the field via an interface.
+func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetAnnictId() int {
+	return v.AnnictId
+}
 
 // GetTitle returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
 func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
@@ -124,6 +158,35 @@ func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonName
 // GetSeasonYear returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.SeasonYear, and is useful for accessing the field via an interface.
 func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonYear() int {
 	return v.SeasonYear
+}
+
+// GetPrograms returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork.Programs, and is useful for accessing the field via an interface.
+func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWork) GetPrograms() GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection {
+	return v.Programs
+}
+
+// GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection includes the requested fields of the GraphQL type ProgramConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Program.
+type GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection struct {
+	// A list of nodes.
+	Nodes []GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram `json:"nodes"`
+}
+
+// GetNodes returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection) GetNodes() []GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram {
+	return v.Nodes
+}
+
+// GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram includes the requested fields of the GraphQL type Program.
+type GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram struct {
+	StartedAt time.Time `json:"startedAt"`
+}
+
+// GetStartedAt returns GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram.StartedAt, and is useful for accessing the field via an interface.
+func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram) GetStartedAt() time.Time {
+	return v.StartedAt
 }
 
 // GetWatchingWorksResponse is returned by GetWatchingWorks on success.
@@ -163,14 +226,15 @@ func (v *GetWatchingWorksViewerUserWorksWorkConnection) GetNodes() []GetWatching
 //
 // An anime title
 type GetWatchingWorksViewerUserWorksWorkConnectionNodesWork struct {
-	Id         string     `json:"id"`
-	Title      string     `json:"title"`
-	SeasonName SeasonName `json:"seasonName"`
-	SeasonYear int        `json:"seasonYear"`
+	AnnictId   int                                                                             `json:"annictId"`
+	Title      string                                                                          `json:"title"`
+	SeasonName SeasonName                                                                      `json:"seasonName"`
+	SeasonYear int                                                                             `json:"seasonYear"`
+	Programs   GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection `json:"programs"`
 }
 
-// GetId returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.Id, and is useful for accessing the field via an interface.
-func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetId() string { return v.Id }
+// GetAnnictId returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.AnnictId, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetAnnictId() int { return v.AnnictId }
 
 // GetTitle returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
 func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
@@ -183,6 +247,35 @@ func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonName()
 // GetSeasonYear returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.SeasonYear, and is useful for accessing the field via an interface.
 func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonYear() int {
 	return v.SeasonYear
+}
+
+// GetPrograms returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWork.Programs, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetPrograms() GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection {
+	return v.Programs
+}
+
+// GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection includes the requested fields of the GraphQL type ProgramConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Program.
+type GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection struct {
+	// A list of nodes.
+	Nodes []GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram `json:"nodes"`
+}
+
+// GetNodes returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection) GetNodes() []GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram {
+	return v.Nodes
+}
+
+// GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram includes the requested fields of the GraphQL type Program.
+type GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram struct {
+	StartedAt time.Time `json:"startedAt"`
+}
+
+// GetStartedAt returns GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram.StartedAt, and is useful for accessing the field via an interface.
+func (v *GetWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram) GetStartedAt() time.Time {
+	return v.StartedAt
 }
 
 // Season name
@@ -201,10 +294,15 @@ query GetOnHoldWorks {
 	viewer {
 		works(state: WATCHING) {
 			nodes {
-				id
+				annictId
 				title
 				seasonName
 				seasonYear
+				programs(first: 1) {
+					nodes {
+						startedAt
+					}
+				}
 			}
 		}
 	}
@@ -239,10 +337,15 @@ query GetWannaWatchWorks {
 	viewer {
 		works(state: WANNA_WATCH) {
 			nodes {
-				id
+				annictId
 				title
 				seasonName
 				seasonYear
+				programs(first: 1) {
+					nodes {
+						startedAt
+					}
+				}
 			}
 		}
 	}
@@ -277,10 +380,15 @@ query GetWatchingWorks {
 	viewer {
 		works(state: WATCHING) {
 			nodes {
-				id
+				annictId
 				title
 				seasonName
 				seasonYear
+				programs(first: 1) {
+					nodes {
+						startedAt
+					}
+				}
 			}
 		}
 	}
