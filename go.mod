@@ -12,8 +12,8 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/prometheus/client_golang v1.18.0
 	github.com/urfave/cli/v2 v2.27.1
+	go.uber.org/multierr v1.11.0
 	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc
-	golang.org/x/sync v0.5.0
 )
 
 require (
