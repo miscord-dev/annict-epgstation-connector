@@ -175,6 +175,14 @@ func (s *syncer) registerRuleToEPGStation(ctx context.Context, work annictWork) 
 		// recording rule with same keyword has already been registered
 		// skip registration
 		// TODO: Remove this logic after introducing cleanup logic
+		slog.Debug("recording rule with same keyword has already been registered", slog.String("keyword", work.Title), slog.String("annict_work_id", work.ID), slog.Int("number_of_rules", len(rules)))
+		for _, rule := range rules {
+			syncerRecordingRuleSynced.WithLabelValues(strconv.Itoa(rule.Id), work.ID).Set(1)
+			ruleIDs = append(ruleIDs, RecordingRuleID(rule.Id))
+		}
+		if err := s.setRecordingRuleIDsByAnnictWorkID(work.ID, ruleIDs); err != nil {
+			return fmt.Errorf("failed to store recording rule IDs for Annict work ID %s: %w", work.ID, err)
+		}
 		slog.Debug("recording rule with same keyword has already been registered", slog.String("keyword", work.Title))
 		return nil
 	}
@@ -213,10 +221,12 @@ func (s *syncer) registerRuleToEPGStation(ctx context.Context, work annictWork) 
 			AllowEndLack:   false,
 		},
 	}
+	slog.Debug("registering rules into EPGStation", slog.String("annict_work_title", work.Title), slog.String("annict_work_id", work.ID))
 	r, err := s.esClient.PostRules(ctx, body)
 	if err != nil {
 		return err
 	}
+	slog.Debug("got response from EPGStation", slog.String("annict_work_title", work.Title), slog.String("annict_work_id", work.ID), slog.Int("status_code", r.StatusCode))
 	res, err := epgstation.ParsePostRulesResponse(r)
 	if err != nil {
 		return err
@@ -225,11 +235,12 @@ func (s *syncer) registerRuleToEPGStation(ctx context.Context, work annictWork) 
 		return fmt.Errorf("failed to register rules into EPGStation: %s", res.Body)
 	}
 	ids := RecordingRuleIDs{RecordingRuleID(res.JSON201.RuleId)}
+	slog.Debug("store recording rule IDs into DB", slog.String("annict_work_title", work.Title), slog.String("annict_work_id", work.ID), slog.Int("number_of_rules", len(ids)), slog.Int("rule_id", int(ids[0])))
 	if err := s.setRecordingRuleIDsByAnnictWorkID(work.ID, ids); err != nil {
 		return err
 	}
+	slog.Debug("registered rules into EPGStation", slog.String("annict_work_title", work.Title), slog.String("annict_work_id", work.ID), slog.Int("number_of_rules", len(ids)))
 	syncerRecordingRuleSynced.WithLabelValues(strconv.Itoa(int(ids[0])), work.ID).Set(1)
-	// TODO(musaprg): output response in the log message
 	return nil
 }
 
