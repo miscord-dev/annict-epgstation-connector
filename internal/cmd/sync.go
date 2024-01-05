@@ -72,9 +72,11 @@ var syncCmd = &cli.Command{
 			for {
 				slog.Info("syncing...")
 				if err := s.Sync(c.Context); err != nil {
-					return err
+					slog.Error("failed to sync", slog.String("error", err.Error()))
+				} else {
+					slog.Info("synced")
 				}
-				slog.Info("finish sync and sleep", slog.Int("interval", interval))
+				slog.Info("sleep", slog.Int("interval", interval))
 				time.Sleep(time.Duration(interval) * time.Second)
 			}
 		} else { // one shot mode
