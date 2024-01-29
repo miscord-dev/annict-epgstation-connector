@@ -1,4 +1,4 @@
-module github.com/musaprg/annict-epgstation-connector
+module github.com/miscord-dev/annict-epgstation-connector
 
 go 1.21
 

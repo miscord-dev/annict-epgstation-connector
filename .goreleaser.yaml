@@ -45,11 +45,11 @@ brews:
     tap:
       owner: musaprg
       name: homebrew-tap
-    url_template: "https://github.com/musaprg/annict-epgstation-connector/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/miscord-dev/annict-epgstation-connector/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     commit_author:
       name: goreleaserbot
       email: goreleaser@carlosbecker.com
-    homepage: "https://mssn.dev/"
+    homepage: "https://miscord.win/"
     description: "."
     test: | # test command to evaluate the installation successed
       system "#{bin}/annict-epgstation-connector -h"
