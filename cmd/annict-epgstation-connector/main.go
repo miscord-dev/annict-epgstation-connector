@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/musaprg/annict-epgstation-connector/internal/cmd"
+	"github.com/miscord-dev/annict-epgstation-connector/internal/cmd"
 )
 
 func main() {
