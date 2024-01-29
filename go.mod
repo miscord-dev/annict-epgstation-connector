@@ -1,4 +1,4 @@
-module github.com/musaprg/annict-epgstation-connector
+module github.com/miscord-dev/annict-epgstation-connector
 
 go 1.21
 
@@ -9,6 +9,7 @@ require (
 	github.com/cockroachdb/pebble v1.0.0
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/labstack/echo/v4 v4.11.4
+	github.com/musaprg/annict-epgstation-connector v0.3.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/prometheus/client_golang v1.18.0
 	github.com/urfave/cli/v2 v2.27.1
