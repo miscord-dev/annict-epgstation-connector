@@ -7,7 +7,7 @@ toolchain go1.22.4
 require (
 	github.com/Khan/genqlient v0.7.0
 	github.com/cockroachdb/pebble v1.1.1
-	github.com/getkin/kin-openapi v0.123.0
+	github.com/getkin/kin-openapi v0.125.0
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/prometheus/client_golang v1.19.1
