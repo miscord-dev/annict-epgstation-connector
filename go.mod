@@ -7,7 +7,7 @@ toolchain go1.22.6
 require (
 	github.com/Khan/genqlient v0.7.0
 	github.com/cockroachdb/pebble v1.1.2
-	github.com/getkin/kin-openapi v0.123.0
+	github.com/getkin/kin-openapi v0.128.0
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/prometheus/client_golang v1.19.1
@@ -32,12 +32,12 @@ require (
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
-	github.com/go-openapi/jsonpointer v0.20.2 // indirect
-	github.com/go-openapi/swag v0.22.8 // indirect
+	github.com/go-openapi/jsonpointer v0.21.0 // indirect
+	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/invopop/yaml v0.2.0 // indirect
+	github.com/invopop/yaml v0.3.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
