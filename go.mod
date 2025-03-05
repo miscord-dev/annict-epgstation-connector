@@ -1,12 +1,13 @@
 module github.com/miscord-dev/annict-epgstation-connector
 
-go 1.21
+go 1.22
 
-toolchain go1.22.6
+toolchain go1.24.1
 
 require (
 	github.com/Khan/genqlient v0.7.0
 	github.com/cockroachdb/pebble v1.1.4
+	github.com/cockroachdb/pebble/v2 v2.0.2
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/oapi-codegen/runtime v1.1.1
@@ -17,7 +18,7 @@ require (
 )
 
 require (
-	github.com/DataDog/zstd v1.4.5 // indirect
+	github.com/DataDog/zstd v1.5.6-0.20230824185856-869dae002e5e // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/alexflint/go-arg v1.4.2 // indirect
 	github.com/alexflint/go-scalar v1.0.0 // indirect
@@ -35,7 +36,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.8 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
+	github.com/golang/snappy v0.0.5-0.20231225225746-43d5d4cd4e0e // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
