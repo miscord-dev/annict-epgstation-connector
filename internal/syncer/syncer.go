@@ -26,6 +26,8 @@ const (
 
 type Interface interface {
 	Sync(context.Context) error
+	TearDown() error
+	DisableRecordingRule(ctx context.Context, ruleID int) error
 }
 
 type syncer struct {
@@ -118,26 +120,42 @@ func (s *syncer) Sync(ctx context.Context) error {
 }
 
 func (s *syncer) sync(ctx context.Context) error {
-	var titles []annictWork
+	// 録画ルールを登録する作品のリスト（視聴中や視聴予定の作品）
+	var activeWorks []annictWork
 	if ts, err := s.getWannaWatchWorks(ctx); err != nil {
 		return err
 	} else {
-		titles = append(titles, ts...)
+		activeWorks = append(activeWorks, ts...)
 	}
 	if ts, err := s.getWatchingWorks(ctx); err != nil {
 		return err
 	} else {
-		titles = append(titles, ts...)
+		activeWorks = append(activeWorks, ts...)
 	}
+
+	// 録画ルールを無効化する作品のリスト（視聴中止や一時中断の作品）
+	var inactiveWorks []annictWork
 	if ts, err := s.getOnHoldWorks(ctx); err != nil {
 		return err
 	} else {
-		titles = append(titles, ts...)
+		inactiveWorks = append(inactiveWorks, ts...)
+	}
+	if ts, err := s.getStopWatchingWorks(ctx); err != nil {
+		return err
+	} else {
+		inactiveWorks = append(inactiveWorks, ts...)
 	}
 
-	if err := s.registerRulesToEPGStation(ctx, titles); err != nil {
+	// アクティブな作品の録画ルールを登録
+	if err := s.registerRulesToEPGStation(ctx, activeWorks); err != nil {
 		return err
 	}
+
+	// 非アクティブな作品の録画ルールを無効化
+	if err := s.disableRulesForInactiveWorks(ctx, inactiveWorks); err != nil {
+		return fmt.Errorf("failed to disable rules for inactive works: %w", err)
+	}
+
 	return nil
 }
 
@@ -244,6 +262,29 @@ func (s *syncer) registerRuleToEPGStation(ctx context.Context, work annictWork) 
 	return nil
 }
 
+func (s *syncer) disableRulesForInactiveWorks(ctx context.Context, works []annictWork) error {
+	var errs error
+	for _, work := range works {
+		ruleIDs, err := s.getRecordingRuleIDsByAnnictWorkID(work.ID)
+		if err != nil {
+			if errors.Is(err, pebble.ErrNotFound) {
+				continue
+			}
+			errs = multierr.Append(errs, fmt.Errorf("failed to get recording rule IDs for Annict work ID %s: %w", work.ID, err))
+			continue
+		}
+		for _, id := range ruleIDs {
+			if err := s.DisableRecordingRule(ctx, int(id)); err != nil {
+				errs = multierr.Append(errs, fmt.Errorf("failed to disable recording rule %d for Annict work ID %s: %w", id, work.ID, err))
+			}
+		}
+	}
+	if errs != nil {
+		return fmt.Errorf("failed to disable rules for inactive works: %w", errs)
+	}
+	return nil
+}
+
 func (s *syncer) getRulesByKeyword(ctx context.Context, keyword string) ([]epgstation.RuleKeywordItem, error) {
 	r, err := s.esClient.GetRulesKeyword(ctx, &epgstation.GetRulesKeywordParams{
 		Keyword: &keyword,
@@ -327,6 +368,29 @@ func (s *syncer) getOnHoldWorks(ctx context.Context) ([]annictWork, error) {
 	return titles, nil
 }
 
+// getStopWatchingWorks gets works that the user has stopped watching
+func (s *syncer) getStopWatchingWorks(ctx context.Context) ([]annictWork, error) {
+	var titles []annictWork
+	r, err := annict.GetStopWatchingWorks(ctx, s.annictClient)
+	if err != nil {
+		return titles, fmt.Errorf("failed to sync: %w", err)
+	}
+	for _, n := range r.Viewer.Works.Nodes {
+		var startedAt time.Time
+		if len(n.Programs.Nodes) != 0 {
+			startedAt = n.Programs.Nodes[0].StartedAt
+		}
+		titles = append(titles, annictWork{
+			ID:         strconv.Itoa(n.AnnictId),
+			Title:      n.Title,
+			SeasonName: string(n.SeasonName),
+			SeasonYear: n.SeasonYear,
+			StartedAt:  startedAt,
+		})
+	}
+	return titles, nil
+}
+
 // TODO: move these functions to a separate package
 
 // setRecordingRuleIDsByAnnictWorkID stores recording rule IDs for the given Annict work ID in the pebble DB
@@ -355,4 +419,20 @@ func (s *syncer) getRecordingRuleIDsByAnnictWorkID(annictWorkID string) ([]Recor
 		return ids, fmt.Errorf("failed to decode recording rule IDs for Annict work ID %s: %w", annictWorkID, err)
 	}
 	return ids, nil
+}
+
+func (s *syncer) DisableRecordingRule(ctx context.Context, ruleID int) error {
+	slog.Debug("disabling recording rule", slog.Int("rule_id", ruleID))
+	r, err := s.esClient.PatchRules(ctx, epgstation.PatchRulesJSONRequestBody{
+		RuleId: ruleID,
+		Enable: epgstation.NewFalsePointer(),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to disable recording rule %d: %w", ruleID, err)
+	}
+	if r.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to disable recording rule %d: status code %d", ruleID, r.StatusCode)
+	}
+	slog.Debug("disabled recording rule", slog.Int("rule_id", ruleID))
+	return nil
 }

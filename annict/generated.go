@@ -98,6 +98,99 @@ func (v *GetOnHoldWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConn
 	return v.StartedAt
 }
 
+// GetStopWatchingWorksResponse is returned by GetStopWatchingWorks on success.
+type GetStopWatchingWorksResponse struct {
+	Viewer GetStopWatchingWorksViewerUser `json:"viewer"`
+}
+
+// GetViewer returns GetStopWatchingWorksResponse.Viewer, and is useful for accessing the field via an interface.
+func (v *GetStopWatchingWorksResponse) GetViewer() GetStopWatchingWorksViewerUser { return v.Viewer }
+
+// GetStopWatchingWorksViewerUser includes the requested fields of the GraphQL type User.
+type GetStopWatchingWorksViewerUser struct {
+	Works GetStopWatchingWorksViewerUserWorksWorkConnection `json:"works"`
+}
+
+// GetWorks returns GetStopWatchingWorksViewerUser.Works, and is useful for accessing the field via an interface.
+func (v *GetStopWatchingWorksViewerUser) GetWorks() GetStopWatchingWorksViewerUserWorksWorkConnection {
+	return v.Works
+}
+
+// GetStopWatchingWorksViewerUserWorksWorkConnection includes the requested fields of the GraphQL type WorkConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Work.
+type GetStopWatchingWorksViewerUserWorksWorkConnection struct {
+	// A list of nodes.
+	Nodes []GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork `json:"nodes"`
+}
+
+// GetNodes returns GetStopWatchingWorksViewerUserWorksWorkConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *GetStopWatchingWorksViewerUserWorksWorkConnection) GetNodes() []GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork {
+	return v.Nodes
+}
+
+// GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork includes the requested fields of the GraphQL type Work.
+// The GraphQL type's documentation follows.
+//
+// An anime title
+type GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork struct {
+	AnnictId   int                                                                                 `json:"annictId"`
+	Title      string                                                                              `json:"title"`
+	SeasonName SeasonName                                                                          `json:"seasonName"`
+	SeasonYear int                                                                                 `json:"seasonYear"`
+	Programs   GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection `json:"programs"`
+}
+
+// GetAnnictId returns GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork.AnnictId, and is useful for accessing the field via an interface.
+func (v *GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetAnnictId() int {
+	return v.AnnictId
+}
+
+// GetTitle returns GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
+func (v *GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string {
+	return v.Title
+}
+
+// GetSeasonName returns GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork.SeasonName, and is useful for accessing the field via an interface.
+func (v *GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonName() SeasonName {
+	return v.SeasonName
+}
+
+// GetSeasonYear returns GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork.SeasonYear, and is useful for accessing the field via an interface.
+func (v *GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonYear() int {
+	return v.SeasonYear
+}
+
+// GetPrograms returns GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork.Programs, and is useful for accessing the field via an interface.
+func (v *GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWork) GetPrograms() GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection {
+	return v.Programs
+}
+
+// GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection includes the requested fields of the GraphQL type ProgramConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Program.
+type GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection struct {
+	// A list of nodes.
+	Nodes []GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram `json:"nodes"`
+}
+
+// GetNodes returns GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection) GetNodes() []GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram {
+	return v.Nodes
+}
+
+// GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram includes the requested fields of the GraphQL type Program.
+type GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram struct {
+	StartedAt time.Time `json:"startedAt"`
+}
+
+// GetStartedAt returns GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram.StartedAt, and is useful for accessing the field via an interface.
+func (v *GetStopWatchingWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram) GetStartedAt() time.Time {
+	return v.StartedAt
+}
+
 // GetWannaWatchWorksResponse is returned by GetWannaWatchWorks on success.
 type GetWannaWatchWorksResponse struct {
 	Viewer GetWannaWatchWorksViewerUser `json:"viewer"`
@@ -292,7 +385,7 @@ const (
 const GetOnHoldWorks_Operation = `
 query GetOnHoldWorks {
 	viewer {
-		works(state: WATCHING) {
+		works(state: ON_HOLD) {
 			nodes {
 				annictId
 				title
@@ -310,25 +403,68 @@ query GetOnHoldWorks {
 `
 
 func GetOnHoldWorks(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 ) (*GetOnHoldWorksResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "GetOnHoldWorks",
 		Query:  GetOnHoldWorks_Operation,
 	}
-	var err error
+	var err_ error
 
-	var data GetOnHoldWorksResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ GetOnHoldWorksResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
+}
+
+// The query or mutation executed by GetStopWatchingWorks.
+const GetStopWatchingWorks_Operation = `
+query GetStopWatchingWorks {
+	viewer {
+		works(state: STOP_WATCHING) {
+			nodes {
+				annictId
+				title
+				seasonName
+				seasonYear
+				programs(first: 1) {
+					nodes {
+						startedAt
+					}
+				}
+			}
+		}
+	}
+}
+`
+
+func GetStopWatchingWorks(
+	ctx_ context.Context,
+	client_ graphql.Client,
+) (*GetStopWatchingWorksResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "GetStopWatchingWorks",
+		Query:  GetStopWatchingWorks_Operation,
+	}
+	var err_ error
+
+	var data_ GetStopWatchingWorksResponse
+	resp_ := &graphql.Response{Data: &data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return &data_, err_
 }
 
 // The query or mutation executed by GetWannaWatchWorks.
@@ -353,25 +489,25 @@ query GetWannaWatchWorks {
 `
 
 func GetWannaWatchWorks(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 ) (*GetWannaWatchWorksResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "GetWannaWatchWorks",
 		Query:  GetWannaWatchWorks_Operation,
 	}
-	var err error
+	var err_ error
 
-	var data GetWannaWatchWorksResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ GetWannaWatchWorksResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
 // The query or mutation executed by GetWatchingWorks.
@@ -396,23 +532,23 @@ query GetWatchingWorks {
 `
 
 func GetWatchingWorks(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 ) (*GetWatchingWorksResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "GetWatchingWorks",
 		Query:  GetWatchingWorks_Operation,
 	}
-	var err error
+	var err_ error
 
-	var data GetWatchingWorksResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ GetWatchingWorksResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }

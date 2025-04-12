@@ -36,7 +36,25 @@ query GetWatchingWorks {
 
 query GetOnHoldWorks {
   viewer {
-    works(state: WATCHING){
+    works(state: ON_HOLD){
+      nodes {
+        annictId
+        title
+        seasonName
+        seasonYear
+        programs (first: 1) {
+          nodes {
+            startedAt
+          }
+        }
+      }
+    }
+  }
+}
+
+query GetStopWatchingWorks {
+  viewer {
+    works(state: STOP_WATCHING){
       nodes {
         annictId
         title
