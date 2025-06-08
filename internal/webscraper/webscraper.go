@@ -7,6 +7,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/miscord-dev/annict-epgstation-connector/internal/syncer"
+	// "golang.org/x/exp/slog" // slog can be removed if not used elsewhere in this file after this change
 )
 
 // GetVodServices scrapes the Annict work page and returns a list of VOD services.
@@ -19,38 +20,32 @@ func GetVodServices(workID string) ([]syncer.VodService, error) {
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("failed to get Annict work page: status code %d", res.StatusCode)
+		return nil, fmt.Errorf("failed to get Annict work page: status code %d for workID %s", res.StatusCode, workID)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse Annict work page: %w", err)
+		return nil, fmt.Errorf("failed to parse Annict work page for workID %s: %w", workID, err)
 	}
 
 	var vodServices []syncer.VodService
 	// Selector for the links under the VOD list
 	selector := "body > div > div.l-default__main.d-flex.flex-column > div.l-default__content > div.c-work-header.pt-3 > div.container > div > div.col.mt-3.mt-sm-0 > ul.list-inline.mt-2 > li > a"
 	doc.Find(selector).Each(func(i int, s *goquery.Selection) {
-		serviceName := strings.TrimSpace(s.Text()) // Get text directly from anchor <a>
+		serviceName := strings.TrimSpace(s.Text())
 		if serviceName != "" {
 			vodServices = append(vodServices, syncer.VodService{Name: serviceName})
-		} else {
-			// Fallback: if <a> text is empty, try to get it from an <img> alt attribute within the <a>
-			imgAlt, imgExists := s.Find("img").Attr("alt")
-			if imgExists && strings.TrimSpace(imgAlt) != "" {
-				vodServices = append(vodServices, syncer.VodService{Name: strings.TrimSpace(imgAlt)})
-			}
 		}
+		// If serviceName is empty, the <a> tag is simply ignored.
 	})
 
-	// Remove duplicates that might have occurred if both text and alt existed and were similar
+	// Deduplication logic remains useful.
 	if len(vodServices) > 0 {
 		seen := make(map[string]bool)
 		uniqueServices := []syncer.VodService{}
 		for _, service := range vodServices {
-            // Normalize by trimming space again, just in case
             name := strings.TrimSpace(service.Name)
-            if name == "" { // Skip empty names that might have slipped through
+            if name == "" {
                 continue
             }
 			if _, ok := seen[name]; !ok {
@@ -60,6 +55,5 @@ func GetVodServices(workID string) ([]syncer.VodService, error) {
 		}
 		vodServices = uniqueServices
 	}
-
 	return vodServices, nil
 }
