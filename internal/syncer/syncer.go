@@ -10,6 +10,7 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/miscord-dev/annict-epgstation-connector/annict"
 	"github.com/miscord-dev/annict-epgstation-connector/epgstation"
+	"github.com/miscord-dev/annict-epgstation-connector/internal/webscraper"
 	"go.uber.org/multierr"
 	"golang.org/x/exp/slog"
 	"net/http"
@@ -160,6 +161,26 @@ func (s *syncer) registerRuleToEPGStation(ctx context.Context, work annictWork) 
 		strconv.Itoa(work.SeasonYear),
 	).Set(float64(work.StartedAt.Unix()))
 
+	// Get VOD services
+	vodServices, err := webscraper.GetVodServices(work.ID)
+	if err != nil {
+		slog.Warn("failed to get VOD services", slog.String("annict_work_id", work.ID), slog.String("err", err.Error()))
+		// Continue without VOD information if scraping fails
+	}
+	work.VodServices = vodServices // Store for potential future use, though not strictly needed for current filtering logic
+
+	// TODO: Move this to a configuration option
+	subscribedServices := []string{"Netflix", "Amazon Prime Video"}
+
+	for _, vs := range work.VodServices {
+		for _, subscribed := range subscribedServices {
+			if vs.Name == subscribed {
+				slog.Info("Skipping rule registration for work available on subscribed VOD service", slog.String("annict_work_title", work.Title), slog.String("vod_service", vs.Name))
+				return nil // Skip registration
+			}
+		}
+	}
+
 	ruleIDs, err := s.getRecordingRuleIDsByAnnictWorkID(work.ID)
 	switch {
 	case err != nil && !errors.Is(err, pebble.ErrNotFound):
@@ -169,6 +190,7 @@ func (s *syncer) registerRuleToEPGStation(ctx context.Context, work annictWork) 
 		for _, id := range ruleIDs {
 			syncerRecordingRuleSynced.WithLabelValues(strconv.Itoa(int(id)), work.ID).Set(1)
 		}
+		slog.Debug("Recording rule already exists for Annict work ID", slog.String("annict_work_id", work.ID))
 		return nil
 	}
 	if rules, _ := s.getRulesByKeyword(ctx, work.Title); len(rules) != 0 {
