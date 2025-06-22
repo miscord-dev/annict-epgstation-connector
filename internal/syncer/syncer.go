@@ -10,11 +10,13 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/miscord-dev/annict-epgstation-connector/annict"
 	"github.com/miscord-dev/annict-epgstation-connector/epgstation"
+	"github.com/miscord-dev/annict-epgstation-connector/internal/vod"
 	"go.uber.org/multierr"
 	"golang.org/x/exp/slog"
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -29,16 +31,20 @@ type Interface interface {
 }
 
 type syncer struct {
-	annictClient graphql.Client
-	esClient     *epgstation.Client
-	db           *pebble.DB
+	annictClient        graphql.Client
+	esClient            *epgstation.Client
+	db                  *pebble.DB
+	vodChecker          *vod.Checker
+	excludedVODServices []vod.StreamingService
 }
 
 type options struct {
-	AnnictEndpoint     string
-	AnnictAPIToken     string
-	EPGStationEndpoint string
-	DBPath             string
+	AnnictEndpoint      string
+	AnnictAPIToken      string
+	EPGStationEndpoint  string
+	DBPath              string
+	ExcludedVODServices []vod.StreamingService
+	EnableVODFallback   bool
 }
 
 type Option func(*options)
@@ -67,12 +73,36 @@ func WithDBPath(path string) Option {
 	}
 }
 
+func WithExcludedVODServices(services []vod.StreamingService) Option {
+	return func(o *options) {
+		o.ExcludedVODServices = services
+	}
+}
+
+func WithExcludedVODServicesFromStrings(services []string) Option {
+	return func(o *options) {
+		var vodServices []vod.StreamingService
+		for _, service := range services {
+			vodServices = append(vodServices, vod.StreamingService(strings.ToLower(service)))
+		}
+		o.ExcludedVODServices = vodServices
+	}
+}
+
+func WithVODFallback(enabled bool) Option {
+	return func(o *options) {
+		o.EnableVODFallback = enabled
+	}
+}
+
 func NewSyncer(opts ...Option) (Interface, error) {
 	o := options{
-		AnnictEndpoint:     defaultAnnictEndpoint,
-		AnnictAPIToken:     "",
-		EPGStationEndpoint: defaultEPGStationEndpoint,
-		DBPath:             defaultDBPath,
+		AnnictEndpoint:      defaultAnnictEndpoint,
+		AnnictAPIToken:      "",
+		EPGStationEndpoint:  defaultEPGStationEndpoint,
+		DBPath:              defaultDBPath,
+		ExcludedVODServices: []vod.StreamingService{},
+		EnableVODFallback:   false,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -90,9 +120,11 @@ func NewSyncer(opts ...Option) (Interface, error) {
 		return nil, fmt.Errorf("failed to initialize Syncer: %w", err)
 	}
 	return &syncer{
-		annictClient: annictClient,
-		esClient:     esClient,
-		db:           db,
+		annictClient:        annictClient,
+		esClient:            esClient,
+		db:                  db,
+		vodChecker:          vod.NewCheckerWithFallback(o.EnableVODFallback),
+		excludedVODServices: o.ExcludedVODServices,
 	}, nil
 }
 
@@ -159,6 +191,28 @@ func (s *syncer) registerRuleToEPGStation(ctx context.Context, work annictWork) 
 		work.SeasonName,
 		strconv.Itoa(work.SeasonYear),
 	).Set(float64(work.StartedAt.Unix()))
+
+	// Check if we should exclude this work based on VOD availability
+	if len(s.excludedVODServices) > 0 {
+		annictWorkID, err := vod.ParseAnnictWorkID(work.ID)
+		if err != nil {
+			slog.Warn("failed to parse Annict work ID, skipping VOD check", slog.String("work_id", work.ID), slog.String("error", err.Error()))
+		} else {
+			isAvailable, err := s.vodChecker.IsAvailableOnServices(ctx, annictWorkID, s.excludedVODServices)
+			if err != nil {
+				slog.Warn("failed to check VOD availability, proceeding with recording rule creation",
+					slog.String("work_id", work.ID),
+					slog.String("title", work.Title),
+					slog.String("error", err.Error()))
+			} else if isAvailable {
+				slog.Info("skipping recording rule creation due to VOD availability",
+					slog.String("work_id", work.ID),
+					slog.String("title", work.Title),
+					slog.Any("excluded_services", s.excludedVODServices))
+				return nil
+			}
+		}
+	}
 
 	ruleIDs, err := s.getRecordingRuleIDsByAnnictWorkID(work.ID)
 	switch {
