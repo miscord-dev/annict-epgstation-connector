@@ -7,7 +7,7 @@ toolchain go1.24.2
 require (
 	github.com/Khan/genqlient v0.7.0
 	github.com/PuerkitoBio/goquery v1.10.3
-	github.com/cockroachdb/pebble v1.1.4
+	github.com/cockroachdb/pebble v1.1.5
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/oapi-codegen/runtime v1.1.1
