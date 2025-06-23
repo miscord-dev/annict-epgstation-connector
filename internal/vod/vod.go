@@ -73,7 +73,11 @@ func (c *Checker) CheckVODServices(ctx context.Context, annictWorkID int) ([]Str
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch page: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			slog.Warn("failed to close response body", slog.String("error", err.Error()))
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -117,7 +121,6 @@ func (c *Checker) parseServicesFromDocument(doc *goquery.Document) []StreamingSe
 	var services []StreamingService
 
 	// Look for streaming service links in the specific VOD section
-	// Try multiple possible selectors for the streaming services section
 	selectors := []string{
 		".c-work-header ul a[href]",
 		"div.c-work-header ul a[href]",
@@ -129,6 +132,22 @@ func (c *Checker) parseServicesFromDocument(doc *goquery.Document) []StreamingSe
 		".streaming a[href]",
 	}
 
+	found := c.searchServicesWithSelectors(doc, selectors, &services)
+
+	// If no specific VOD section was found and fallback is enabled,
+	// fallback to searching all links
+	if !found && c.enableFallback {
+		c.searchServicesWithSelectors(doc, []string{"a[href]"}, &services)
+	}
+
+	// Remove duplicates
+	services = removeDuplicateServices(services)
+
+	return services
+}
+
+// searchServicesWithSelectors searches for streaming services using the given selectors
+func (c *Checker) searchServicesWithSelectors(doc *goquery.Document, selectors []string, services *[]StreamingService) bool {
 	found := false
 	for _, selector := range selectors {
 		doc.Find(selector).Each(func(i int, s *goquery.Selection) {
@@ -137,93 +156,56 @@ func (c *Checker) parseServicesFromDocument(doc *goquery.Document) []StreamingSe
 				return
 			}
 
-			href = strings.ToLower(href)
-
-			// Check for specific streaming service URLs
-			if strings.Contains(href, "netflix.com") {
-				services = append(services, Netflix)
-				found = true
-			} else if strings.Contains(href, "amazon.co.jp") && (strings.Contains(href, "prime") || strings.Contains(href, "video")) {
-				services = append(services, AmazonPrime)
-				found = true
-			} else if strings.Contains(href, "hulu.jp") || strings.Contains(href, "hulu.com") {
-				services = append(services, Hulu)
-				found = true
-			} else if strings.Contains(href, "disneyplus.com") || strings.Contains(href, "disney") {
-				services = append(services, Disney)
-				found = true
-			} else if strings.Contains(href, "abema.tv") {
-				services = append(services, Abema)
-				found = true
-			} else if strings.Contains(href, "crunchyroll.com") {
-				services = append(services, Crunchyroll)
-				found = true
-			} else if strings.Contains(href, "funimation.com") {
-				services = append(services, Funimation)
-				found = true
-			} else if strings.Contains(href, "dazn.com") {
-				services = append(services, Dazn)
-				found = true
-			} else if strings.Contains(href, "b-ch.com") {
-				services = append(services, Bandai)
-				found = true
-			} else if strings.Contains(href, "nicovideo.jp") || strings.Contains(href, "ch.nicovideo.jp") {
-				services = append(services, Nico)
-				found = true
-			} else if strings.Contains(href, "animestore.docomo.ne.jp") {
-				services = append(services, DAnime)
+			if service := c.identifyStreamingService(strings.ToLower(href)); service != "" {
+				*services = append(*services, service)
 				found = true
 			}
 		})
 
 		// If we found some streaming services with this selector, stop trying others
-		if found {
+		if found && len(selectors) > 1 {
 			break
 		}
 	}
+	return found
+}
 
-	// If no specific VOD section was found and fallback is enabled,
-	// fallback to searching all links but filter out obvious non-VOD sections
-	if !found && c.enableFallback {
-		doc.Find("a[href]").Each(func(i int, s *goquery.Selection) {
-			href, exists := s.Attr("href")
-			if !exists {
-				return
-			}
-
-			href = strings.ToLower(href)
-
-			// Check for specific streaming service URLs
-			if strings.Contains(href, "netflix.com") {
-				services = append(services, Netflix)
-			} else if strings.Contains(href, "amazon.co.jp") && (strings.Contains(href, "prime") || strings.Contains(href, "video")) {
-				services = append(services, AmazonPrime)
-			} else if strings.Contains(href, "hulu.jp") || strings.Contains(href, "hulu.com") {
-				services = append(services, Hulu)
-			} else if strings.Contains(href, "disneyplus.com") || strings.Contains(href, "disney") {
-				services = append(services, Disney)
-			} else if strings.Contains(href, "abema.tv") {
-				services = append(services, Abema)
-			} else if strings.Contains(href, "crunchyroll.com") {
-				services = append(services, Crunchyroll)
-			} else if strings.Contains(href, "funimation.com") {
-				services = append(services, Funimation)
-			} else if strings.Contains(href, "dazn.com") {
-				services = append(services, Dazn)
-			} else if strings.Contains(href, "b-ch.com") {
-				services = append(services, Bandai)
-			} else if strings.Contains(href, "nicovideo.jp") || strings.Contains(href, "ch.nicovideo.jp") {
-				services = append(services, Nico)
-			} else if strings.Contains(href, "animestore.docomo.ne.jp") {
-				services = append(services, DAnime)
-			}
-		})
+// identifyStreamingService identifies the streaming service from a URL
+func (c *Checker) identifyStreamingService(href string) StreamingService {
+	if strings.Contains(href, "netflix.com") {
+		return Netflix
 	}
-
-	// Remove duplicates
-	services = removeDuplicateServices(services)
-
-	return services
+	if strings.Contains(href, "amazon.co.jp") && (strings.Contains(href, "prime") || strings.Contains(href, "video")) {
+		return AmazonPrime
+	}
+	if strings.Contains(href, "hulu.jp") || strings.Contains(href, "hulu.com") {
+		return Hulu
+	}
+	if strings.Contains(href, "disneyplus.com") || strings.Contains(href, "disney") {
+		return Disney
+	}
+	if strings.Contains(href, "abema.tv") {
+		return Abema
+	}
+	if strings.Contains(href, "crunchyroll.com") {
+		return Crunchyroll
+	}
+	if strings.Contains(href, "funimation.com") {
+		return Funimation
+	}
+	if strings.Contains(href, "dazn.com") {
+		return Dazn
+	}
+	if strings.Contains(href, "b-ch.com") {
+		return Bandai
+	}
+	if strings.Contains(href, "nicovideo.jp") || strings.Contains(href, "ch.nicovideo.jp") {
+		return Nico
+	}
+	if strings.Contains(href, "animestore.docomo.ne.jp") {
+		return DAnime
+	}
+	return ""
 }
 
 // IsAvailableOnServices checks if the anime is available on any of the given services

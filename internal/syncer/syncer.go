@@ -317,7 +317,7 @@ func (s *syncer) getRulesByKeyword(ctx context.Context, keyword string) ([]epgst
 }
 
 func (s *syncer) getWannaWatchWorks(ctx context.Context) ([]annictWork, error) {
-	var titles []annictWork
+	titles := make([]annictWork, 0)
 	r, err := annict.GetWannaWatchWorks(ctx, s.annictClient)
 	if err != nil {
 		return titles, fmt.Errorf("failed to sync: %w", err)
@@ -339,7 +339,7 @@ func (s *syncer) getWannaWatchWorks(ctx context.Context) ([]annictWork, error) {
 }
 
 func (s *syncer) getWatchingWorks(ctx context.Context) ([]annictWork, error) {
-	var titles []annictWork
+	titles := make([]annictWork, 0)
 	r, err := annict.GetWatchingWorks(ctx, s.annictClient)
 	if err != nil {
 		return titles, fmt.Errorf("failed to sync: %w", err)
@@ -361,7 +361,7 @@ func (s *syncer) getWatchingWorks(ctx context.Context) ([]annictWork, error) {
 }
 
 func (s *syncer) getOnHoldWorks(ctx context.Context) ([]annictWork, error) {
-	var titles []annictWork
+	titles := make([]annictWork, 0)
 	r, err := annict.GetOnHoldWorks(ctx, s.annictClient)
 	if err != nil {
 		return titles, fmt.Errorf("failed to sync: %w", err)
@@ -404,7 +404,11 @@ func (s *syncer) getRecordingRuleIDsByAnnictWorkID(annictWorkID string) ([]Recor
 	if err != nil {
 		return ids, fmt.Errorf("failed to get recording rule IDs for Annict work ID %s: %w", annictWorkID, err)
 	}
-	defer closer.Close()
+	defer func() {
+		if err := closer.Close(); err != nil {
+			slog.Warn("failed to close DB iterator", slog.String("error", err.Error()))
+		}
+	}()
 	err = json.NewDecoder(bytes.NewReader(value)).Decode(&ids)
 	if err != nil {
 		return ids, fmt.Errorf("failed to decode recording rule IDs for Annict work ID %s: %w", annictWorkID, err)
