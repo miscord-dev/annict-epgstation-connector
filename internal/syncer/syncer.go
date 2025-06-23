@@ -6,6 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/Khan/genqlient/graphql"
 	"github.com/cockroachdb/pebble"
 	"github.com/miscord-dev/annict-epgstation-connector/annict"
@@ -13,11 +19,6 @@ import (
 	"github.com/miscord-dev/annict-epgstation-connector/internal/vod"
 	"go.uber.org/multierr"
 	"golang.org/x/exp/slog"
-	"net/http"
-	"path/filepath"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const (
@@ -138,7 +139,7 @@ func (s *syncer) TearDown() error {
 func (s *syncer) Sync(ctx context.Context) error {
 	start := time.Now()
 	defer func() {
-		syncerSyncDuration.WithLabelValues().Observe(time.Now().Sub(start).Seconds())
+		syncerSyncDuration.WithLabelValues().Observe(time.Since(start).Seconds())
 	}()
 
 	if err := s.sync(ctx); err != nil {
