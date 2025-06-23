@@ -6,16 +6,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/Khan/genqlient/graphql"
 	"github.com/cockroachdb/pebble"
 	"github.com/miscord-dev/annict-epgstation-connector/annict"
 	"github.com/miscord-dev/annict-epgstation-connector/epgstation"
+	"github.com/miscord-dev/annict-epgstation-connector/internal/vod"
 	"go.uber.org/multierr"
 	"golang.org/x/exp/slog"
-	"net/http"
-	"path/filepath"
-	"strconv"
-	"time"
 )
 
 const (
@@ -29,16 +32,20 @@ type Interface interface {
 }
 
 type syncer struct {
-	annictClient graphql.Client
-	esClient     *epgstation.Client
-	db           *pebble.DB
+	annictClient        graphql.Client
+	esClient            *epgstation.Client
+	db                  *pebble.DB
+	vodChecker          *vod.Checker
+	excludedVODServices []vod.StreamingService
 }
 
 type options struct {
-	AnnictEndpoint     string
-	AnnictAPIToken     string
-	EPGStationEndpoint string
-	DBPath             string
+	AnnictEndpoint      string
+	AnnictAPIToken      string
+	EPGStationEndpoint  string
+	DBPath              string
+	ExcludedVODServices []vod.StreamingService
+	EnableVODFallback   bool
 }
 
 type Option func(*options)
@@ -67,12 +74,36 @@ func WithDBPath(path string) Option {
 	}
 }
 
+func WithExcludedVODServices(services []vod.StreamingService) Option {
+	return func(o *options) {
+		o.ExcludedVODServices = services
+	}
+}
+
+func WithExcludedVODServicesFromStrings(services []string) Option {
+	return func(o *options) {
+		var vodServices []vod.StreamingService
+		for _, service := range services {
+			vodServices = append(vodServices, vod.StreamingService(strings.ToLower(service)))
+		}
+		o.ExcludedVODServices = vodServices
+	}
+}
+
+func WithVODFallback(enabled bool) Option {
+	return func(o *options) {
+		o.EnableVODFallback = enabled
+	}
+}
+
 func NewSyncer(opts ...Option) (Interface, error) {
 	o := options{
-		AnnictEndpoint:     defaultAnnictEndpoint,
-		AnnictAPIToken:     "",
-		EPGStationEndpoint: defaultEPGStationEndpoint,
-		DBPath:             defaultDBPath,
+		AnnictEndpoint:      defaultAnnictEndpoint,
+		AnnictAPIToken:      "",
+		EPGStationEndpoint:  defaultEPGStationEndpoint,
+		DBPath:              defaultDBPath,
+		ExcludedVODServices: []vod.StreamingService{},
+		EnableVODFallback:   false,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -90,9 +121,11 @@ func NewSyncer(opts ...Option) (Interface, error) {
 		return nil, fmt.Errorf("failed to initialize Syncer: %w", err)
 	}
 	return &syncer{
-		annictClient: annictClient,
-		esClient:     esClient,
-		db:           db,
+		annictClient:        annictClient,
+		esClient:            esClient,
+		db:                  db,
+		vodChecker:          vod.NewCheckerWithFallback(o.EnableVODFallback),
+		excludedVODServices: o.ExcludedVODServices,
 	}, nil
 }
 
@@ -106,7 +139,7 @@ func (s *syncer) TearDown() error {
 func (s *syncer) Sync(ctx context.Context) error {
 	start := time.Now()
 	defer func() {
-		syncerSyncDuration.WithLabelValues().Observe(time.Now().Sub(start).Seconds())
+		syncerSyncDuration.WithLabelValues().Observe(time.Since(start).Seconds())
 	}()
 
 	if err := s.sync(ctx); err != nil {
@@ -159,6 +192,28 @@ func (s *syncer) registerRuleToEPGStation(ctx context.Context, work annictWork) 
 		work.SeasonName,
 		strconv.Itoa(work.SeasonYear),
 	).Set(float64(work.StartedAt.Unix()))
+
+	// Check if we should exclude this work based on VOD availability
+	if len(s.excludedVODServices) > 0 {
+		annictWorkID, err := vod.ParseAnnictWorkID(work.ID)
+		if err != nil {
+			slog.Warn("failed to parse Annict work ID, skipping VOD check", slog.String("work_id", work.ID), slog.String("error", err.Error()))
+		} else {
+			isAvailable, err := s.vodChecker.IsAvailableOnServices(ctx, annictWorkID, s.excludedVODServices)
+			if err != nil {
+				slog.Warn("failed to check VOD availability, proceeding with recording rule creation",
+					slog.String("work_id", work.ID),
+					slog.String("title", work.Title),
+					slog.String("error", err.Error()))
+			} else if isAvailable {
+				slog.Info("skipping recording rule creation due to VOD availability",
+					slog.String("work_id", work.ID),
+					slog.String("title", work.Title),
+					slog.Any("excluded_services", s.excludedVODServices))
+				return nil
+			}
+		}
+	}
 
 	ruleIDs, err := s.getRecordingRuleIDsByAnnictWorkID(work.ID)
 	switch {
@@ -262,7 +317,7 @@ func (s *syncer) getRulesByKeyword(ctx context.Context, keyword string) ([]epgst
 }
 
 func (s *syncer) getWannaWatchWorks(ctx context.Context) ([]annictWork, error) {
-	var titles []annictWork
+	titles := make([]annictWork, 0)
 	r, err := annict.GetWannaWatchWorks(ctx, s.annictClient)
 	if err != nil {
 		return titles, fmt.Errorf("failed to sync: %w", err)
@@ -284,7 +339,7 @@ func (s *syncer) getWannaWatchWorks(ctx context.Context) ([]annictWork, error) {
 }
 
 func (s *syncer) getWatchingWorks(ctx context.Context) ([]annictWork, error) {
-	var titles []annictWork
+	titles := make([]annictWork, 0)
 	r, err := annict.GetWatchingWorks(ctx, s.annictClient)
 	if err != nil {
 		return titles, fmt.Errorf("failed to sync: %w", err)
@@ -306,7 +361,7 @@ func (s *syncer) getWatchingWorks(ctx context.Context) ([]annictWork, error) {
 }
 
 func (s *syncer) getOnHoldWorks(ctx context.Context) ([]annictWork, error) {
-	var titles []annictWork
+	titles := make([]annictWork, 0)
 	r, err := annict.GetOnHoldWorks(ctx, s.annictClient)
 	if err != nil {
 		return titles, fmt.Errorf("failed to sync: %w", err)
@@ -349,7 +404,11 @@ func (s *syncer) getRecordingRuleIDsByAnnictWorkID(annictWorkID string) ([]Recor
 	if err != nil {
 		return ids, fmt.Errorf("failed to get recording rule IDs for Annict work ID %s: %w", annictWorkID, err)
 	}
-	defer closer.Close()
+	defer func() {
+		if err := closer.Close(); err != nil {
+			slog.Warn("failed to close DB iterator", slog.String("error", err.Error()))
+		}
+	}()
 	err = json.NewDecoder(bytes.NewReader(value)).Decode(&ids)
 	if err != nil {
 		return ids, fmt.Errorf("failed to decode recording rule IDs for Annict work ID %s: %w", annictWorkID, err)

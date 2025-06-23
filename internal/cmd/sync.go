@@ -1,13 +1,14 @@
 package cmd
 
 import (
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/miscord-dev/annict-epgstation-connector/internal/syncer"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/exp/slog"
-	"log"
-	"net/http"
-	"time"
 )
 
 const (
@@ -44,13 +45,31 @@ var syncCmd = &cli.Command{
 			Usage:   "path to the database",
 			Value:   "/tmp/annict-epgstation-connector",
 		},
+		// exclude VOD services
+		&cli.StringSliceFlag{
+			Name:    "exclude-vod-services",
+			Aliases: []string{"exclude-vod"},
+			Usage:   "exclude recording rules for anime available on these VOD services (comma-separated list: netflix, amazon-prime, hulu, disney, abema, crunchyroll, funimation, dazn, bandai, nico, danime)",
+		},
+		// enable VOD fallback
+		&cli.BoolFlag{
+			Name:  "enable-vod-fallback",
+			Usage: "enable fallback VOD detection when specific VOD section is not found (searches all page links with filtering)",
+			Value: false,
+		},
 	},
 	Action: func(c *cli.Context) error {
+		// Parse excluded VOD services
+		excludedVODServices := c.StringSlice("exclude-vod-services")
+		enableVODFallback := c.Bool("enable-vod-fallback")
+
 		s, err := syncer.NewSyncer(
 			syncer.WithAnnictAPIToken(c.String(string(annictAPITokenFlag))),
 			syncer.WithAnnictEndpoint(annictEndpoint),
 			syncer.WithEPGStationEndpoint(c.String(string(epgstationEndpointFlag))),
 			syncer.WithDBPath(c.String("db-path")),
+			syncer.WithExcludedVODServicesFromStrings(excludedVODServices),
+			syncer.WithVODFallback(enableVODFallback),
 		)
 		if err != nil {
 			return err
