@@ -310,25 +310,25 @@ query GetOnHoldWorks {
 `
 
 func GetOnHoldWorks(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 ) (*GetOnHoldWorksResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "GetOnHoldWorks",
 		Query:  GetOnHoldWorks_Operation,
 	}
-	var err error
+	var err_ error
 
-	var data GetOnHoldWorksResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ GetOnHoldWorksResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
 // The query or mutation executed by GetWannaWatchWorks.
@@ -353,25 +353,25 @@ query GetWannaWatchWorks {
 `
 
 func GetWannaWatchWorks(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 ) (*GetWannaWatchWorksResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "GetWannaWatchWorks",
 		Query:  GetWannaWatchWorks_Operation,
 	}
-	var err error
+	var err_ error
 
-	var data GetWannaWatchWorksResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ GetWannaWatchWorksResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
 // The query or mutation executed by GetWatchingWorks.
@@ -396,23 +396,23 @@ query GetWatchingWorks {
 `
 
 func GetWatchingWorks(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 ) (*GetWatchingWorksResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "GetWatchingWorks",
 		Query:  GetWatchingWorks_Operation,
 	}
-	var err error
+	var err_ error
 
-	var data GetWatchingWorksResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ GetWatchingWorksResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
