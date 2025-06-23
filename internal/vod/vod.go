@@ -3,10 +3,12 @@ package vod
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/exp/slog"
@@ -35,65 +37,208 @@ type ServiceInfo struct {
 	Services     []StreamingService
 }
 
+// RetryConfig contains configuration for retry logic
+type RetryConfig struct {
+	MaxRetries    int
+	BaseDelay     time.Duration
+	MaxDelay      time.Duration
+	BackoffFactor float64
+}
+
+// RateLimitConfig contains configuration for rate limiting
+type RateLimitConfig struct {
+	RequestDelay time.Duration
+}
+
+// DefaultRetryConfig returns the default retry configuration
+func DefaultRetryConfig() RetryConfig {
+	return RetryConfig{
+		MaxRetries:    3,
+		BaseDelay:     1 * time.Second,
+		MaxDelay:      30 * time.Second,
+		BackoffFactor: 2.0,
+	}
+}
+
+// DefaultRateLimitConfig returns the default rate limit configuration
+func DefaultRateLimitConfig() RateLimitConfig {
+	return RateLimitConfig{
+		RequestDelay: 2 * time.Second,
+	}
+}
+
 // Checker handles VOD service availability checking
 type Checker struct {
-	httpClient     *http.Client
-	enableFallback bool
+	httpClient      *http.Client
+	enableFallback  bool
+	retryConfig     RetryConfig
+	rateLimitConfig RateLimitConfig
+	lastRequestTime time.Time
 }
 
 // NewChecker creates a new VOD service checker
 func NewChecker() *Checker {
 	return &Checker{
-		httpClient:     &http.Client{},
-		enableFallback: false,
+		httpClient:      &http.Client{Timeout: 30 * time.Second},
+		enableFallback:  false,
+		retryConfig:     DefaultRetryConfig(),
+		rateLimitConfig: DefaultRateLimitConfig(),
 	}
 }
 
 // NewCheckerWithFallback creates a new VOD service checker with fallback enabled
 func NewCheckerWithFallback(enableFallback bool) *Checker {
 	return &Checker{
-		httpClient:     &http.Client{},
-		enableFallback: enableFallback,
+		httpClient:      &http.Client{Timeout: 30 * time.Second},
+		enableFallback:  enableFallback,
+		retryConfig:     DefaultRetryConfig(),
+		rateLimitConfig: DefaultRateLimitConfig(),
+	}
+}
+
+// NewCheckerWithConfig creates a new VOD service checker with custom configuration
+func NewCheckerWithConfig(enableFallback bool, retryConfig RetryConfig, rateLimitConfig RateLimitConfig) *Checker {
+	return &Checker{
+		httpClient:      &http.Client{Timeout: 30 * time.Second},
+		enableFallback:  enableFallback,
+		retryConfig:     retryConfig,
+		rateLimitConfig: rateLimitConfig,
 	}
 }
 
 // CheckVODServices checks which streaming services have the given anime available
 func (c *Checker) CheckVODServices(ctx context.Context, annictWorkID int) ([]StreamingService, error) {
-	url := fmt.Sprintf("https://annict.com/works/%d", annictWorkID)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	// Set user agent to avoid being blocked
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch page: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			slog.Warn("failed to close response body", slog.String("error", err.Error()))
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	services, err := c.parseServicesFromResponse(resp)
-	if err != nil {
+	// Apply rate limiting
+	if err := c.applyRateLimit(ctx); err != nil {
 		return nil, err
 	}
 
-	slog.Debug("VOD services found",
-		slog.Int("annict_work_id", annictWorkID),
-		slog.Int("service_count", len(services)),
-		slog.Any("services", services))
+	url := fmt.Sprintf("https://annict.com/works/%d", annictWorkID)
 
-	return services, nil
+	var lastErr error
+	for attempt := 0; attempt <= c.retryConfig.MaxRetries; attempt++ {
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		// Set user agent to avoid being blocked
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to fetch page: %w", err)
+			if attempt < c.retryConfig.MaxRetries {
+				delay := c.calculateBackoffDelay(attempt)
+				slog.Warn("Request failed, retrying",
+					slog.Int("annict_work_id", annictWorkID),
+					slog.Int("attempt", attempt+1),
+					slog.Int("max_retries", c.retryConfig.MaxRetries),
+					slog.Duration("delay", delay),
+					slog.String("error", err.Error()))
+				
+				select {
+				case <-time.After(delay):
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				}
+				continue
+			}
+			return nil, lastErr
+		}
+
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				slog.Warn("failed to close response body", slog.String("error", err.Error()))
+			}
+		}()
+
+		// Handle rate limiting (429) and server errors (5xx)
+		if resp.StatusCode == http.StatusTooManyRequests || (resp.StatusCode >= 500 && resp.StatusCode < 600) {
+			lastErr = fmt.Errorf("HTTP error: %d", resp.StatusCode)
+			if attempt < c.retryConfig.MaxRetries {
+				delay := c.calculateBackoffDelay(attempt)
+				
+				// Check for Retry-After header
+				if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
+					if retrySeconds, err := strconv.Atoi(retryAfter); err == nil {
+						suggestedDelay := time.Duration(retrySeconds) * time.Second
+						if suggestedDelay > delay {
+							delay = suggestedDelay
+						}
+					}
+				}
+				
+				slog.Warn("Rate limited or server error, retrying",
+					slog.Int("annict_work_id", annictWorkID),
+					slog.Int("status_code", resp.StatusCode),
+					slog.Int("attempt", attempt+1),
+					slog.Int("max_retries", c.retryConfig.MaxRetries),
+					slog.Duration("delay", delay))
+				
+				select {
+				case <-time.After(delay):
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				}
+				continue
+			}
+			return nil, lastErr
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+
+		services, err := c.parseServicesFromResponse(resp)
+		if err != nil {
+			return nil, err
+		}
+
+		slog.Debug("VOD services found",
+			slog.Int("annict_work_id", annictWorkID),
+			slog.Int("service_count", len(services)),
+			slog.Any("services", services))
+
+		// Update last request time on successful request
+		c.lastRequestTime = time.Now()
+		return services, nil
+	}
+
+	return nil, lastErr
+}
+
+// applyRateLimit applies rate limiting between requests
+func (c *Checker) applyRateLimit(ctx context.Context) error {
+	if c.rateLimitConfig.RequestDelay <= 0 {
+		return nil
+	}
+
+	if !c.lastRequestTime.IsZero() {
+		elapsed := time.Since(c.lastRequestTime)
+		if elapsed < c.rateLimitConfig.RequestDelay {
+			waitTime := c.rateLimitConfig.RequestDelay - elapsed
+			slog.Debug("Rate limiting: waiting before next request",
+				slog.Duration("wait_time", waitTime))
+			
+			select {
+			case <-time.After(waitTime):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+	}
+
+	return nil
+}
+
+// calculateBackoffDelay calculates the delay for the next retry attempt using exponential backoff
+func (c *Checker) calculateBackoffDelay(attempt int) time.Duration {
+	delay := time.Duration(float64(c.retryConfig.BaseDelay) * math.Pow(c.retryConfig.BackoffFactor, float64(attempt)))
+	if delay > c.retryConfig.MaxDelay {
+		delay = c.retryConfig.MaxDelay
+	}
+	return delay
 }
 
 // parseServicesFromResponse extracts streaming services from an HTTP response
