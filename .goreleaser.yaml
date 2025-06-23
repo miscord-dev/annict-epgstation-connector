@@ -20,7 +20,7 @@ builds:
     main: ./cmd/annict-epgstation-connector/main.go
 
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
     # this name template makes the OS and Arch compatible with the results of uname.
     name_template: >-
       {{ .ProjectName }}_
@@ -31,12 +31,12 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     # use zip for windows archives
     format_overrides:
-    - goos: windows
-      format: zip
+      - goos: windows
+        formats: [zip]
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   filters:
@@ -45,7 +45,7 @@ changelog:
       - '^test:'
 brews:
   - name: annict-epgstation-connector
-    tap:
+    repository:
       owner: miscord-dev
       name: homebrew-tap
     url_template: "https://github.com/miscord-dev/annict-epgstation-connector/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
