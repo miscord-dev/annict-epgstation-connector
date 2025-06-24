@@ -11,7 +11,7 @@ require (
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/onsi/ginkgo v1.13.0
+	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.37.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/urfave/cli/v2 v2.27.7
@@ -51,7 +51,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
-	github.com/nxadm/tail v1.4.4 // indirect
+	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
