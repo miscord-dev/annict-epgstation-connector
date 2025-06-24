@@ -208,10 +208,6 @@ golangci-lint run
 5. Run tests and linting
 6. Submit a pull request
 
-## License
-
-[Add license information here]
-
 ## Support
 
 For issues and questions, please use the GitHub issue tracker.
