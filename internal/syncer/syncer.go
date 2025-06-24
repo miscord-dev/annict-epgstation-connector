@@ -185,21 +185,21 @@ func (s *syncer) sync(ctx context.Context) error {
 	// Handle STOP_WATCHING and WATCHED works - remove recording rules (only if enabled)
 	if s.enableRuleRemoval {
 		var worksToRemove []annictWork
-		
+
 		// Get STOP_WATCHING works
 		if stopWatchingWorks, err := s.getStopWatchingWorks(ctx); err != nil {
 			return err
 		} else {
 			worksToRemove = append(worksToRemove, stopWatchingWorks...)
 		}
-		
+
 		// Get WATCHED works
 		if watchedWorks, err := s.getWatchedWorks(ctx); err != nil {
 			return err
 		} else {
 			worksToRemove = append(worksToRemove, watchedWorks...)
 		}
-		
+
 		// Remove rules for all works
 		if err := s.removeRulesFromEPGStation(ctx, worksToRemove); err != nil {
 			return err
