@@ -470,7 +470,14 @@ const (
 	SeasonNameAutumn SeasonName = "AUTUMN"
 )
 
-// The query or mutation executed by GetOnHoldWorks.
+var AllSeasonName = []SeasonName{
+	SeasonNameWinter,
+	SeasonNameSpring,
+	SeasonNameSummer,
+	SeasonNameAutumn,
+}
+
+// The query executed by GetOnHoldWorks.
 const GetOnHoldWorks_Operation = `
 query GetOnHoldWorks {
 	viewer {
@@ -494,15 +501,14 @@ query GetOnHoldWorks {
 func GetOnHoldWorks(
 	ctx_ context.Context,
 	client_ graphql.Client,
-) (*GetOnHoldWorksResponse, error) {
+) (data_ *GetOnHoldWorksResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "GetOnHoldWorks",
 		Query:  GetOnHoldWorks_Operation,
 	}
-	var err_ error
 
-	var data_ GetOnHoldWorksResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &GetOnHoldWorksResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -510,10 +516,10 @@ func GetOnHoldWorks(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by GetStopWatchingWorks.
+// The query executed by GetStopWatchingWorks.
 const GetStopWatchingWorks_Operation = `
 query GetStopWatchingWorks {
 	viewer {
@@ -537,15 +543,14 @@ query GetStopWatchingWorks {
 func GetStopWatchingWorks(
 	ctx_ context.Context,
 	client_ graphql.Client,
-) (*GetStopWatchingWorksResponse, error) {
+) (data_ *GetStopWatchingWorksResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "GetStopWatchingWorks",
 		Query:  GetStopWatchingWorks_Operation,
 	}
-	var err_ error
 
-	var data_ GetStopWatchingWorksResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &GetStopWatchingWorksResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -553,10 +558,10 @@ func GetStopWatchingWorks(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by GetWannaWatchWorks.
+// The query executed by GetWannaWatchWorks.
 const GetWannaWatchWorks_Operation = `
 query GetWannaWatchWorks {
 	viewer {
@@ -580,15 +585,14 @@ query GetWannaWatchWorks {
 func GetWannaWatchWorks(
 	ctx_ context.Context,
 	client_ graphql.Client,
-) (*GetWannaWatchWorksResponse, error) {
+) (data_ *GetWannaWatchWorksResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "GetWannaWatchWorks",
 		Query:  GetWannaWatchWorks_Operation,
 	}
-	var err_ error
 
-	var data_ GetWannaWatchWorksResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &GetWannaWatchWorksResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -596,10 +600,10 @@ func GetWannaWatchWorks(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by GetWatchedWorks.
+// The query executed by GetWatchedWorks.
 const GetWatchedWorks_Operation = `
 query GetWatchedWorks {
 	viewer {
@@ -623,15 +627,14 @@ query GetWatchedWorks {
 func GetWatchedWorks(
 	ctx_ context.Context,
 	client_ graphql.Client,
-) (*GetWatchedWorksResponse, error) {
+) (data_ *GetWatchedWorksResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "GetWatchedWorks",
 		Query:  GetWatchedWorks_Operation,
 	}
-	var err_ error
 
-	var data_ GetWatchedWorksResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &GetWatchedWorksResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -639,10 +642,10 @@ func GetWatchedWorks(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by GetWatchingWorks.
+// The query executed by GetWatchingWorks.
 const GetWatchingWorks_Operation = `
 query GetWatchingWorks {
 	viewer {
@@ -666,15 +669,14 @@ query GetWatchingWorks {
 func GetWatchingWorks(
 	ctx_ context.Context,
 	client_ graphql.Client,
-) (*GetWatchingWorksResponse, error) {
+) (data_ *GetWatchingWorksResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "GetWatchingWorks",
 		Query:  GetWatchingWorks_Operation,
 	}
-	var err_ error
 
-	var data_ GetWatchingWorksResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &GetWatchingWorksResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -682,5 +684,5 @@ func GetWatchingWorks(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
