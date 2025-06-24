@@ -41,12 +41,12 @@ type syncer struct {
 }
 
 type options struct {
-	AnnictEndpoint           string
-	AnnictAPIToken           string
-	EPGStationEndpoint       string
-	DBPath                   string
-	ExcludedVODServices      []vod.StreamingService
-	EnableVODFallback        bool
+	AnnictEndpoint            string
+	AnnictAPIToken            string
+	EPGStationEndpoint        string
+	DBPath                    string
+	ExcludedVODServices       []vod.StreamingService
+	EnableVODFallback         bool
 	EnableStopWatchingRemoval bool
 }
 
@@ -106,12 +106,12 @@ func WithStopWatchingRemoval(enabled bool) Option {
 
 func NewSyncer(opts ...Option) (Interface, error) {
 	o := options{
-		AnnictEndpoint:           defaultAnnictEndpoint,
-		AnnictAPIToken:           "",
-		EPGStationEndpoint:       defaultEPGStationEndpoint,
-		DBPath:                   defaultDBPath,
-		ExcludedVODServices:      []vod.StreamingService{},
-		EnableVODFallback:        false,
+		AnnictEndpoint:            defaultAnnictEndpoint,
+		AnnictAPIToken:            "",
+		EPGStationEndpoint:        defaultEPGStationEndpoint,
+		DBPath:                    defaultDBPath,
+		ExcludedVODServices:       []vod.StreamingService{},
+		EnableVODFallback:         false,
 		EnableStopWatchingRemoval: false,
 	}
 	for _, opt := range opts {
@@ -449,16 +449,16 @@ func (s *syncer) removeRuleFromEPGStation(ctx context.Context, work annictWork) 
 
 	for _, ruleID := range ruleIDs {
 		slog.Debug("removing recording rule from EPGStation", slog.String("annict_work_title", work.Title), slog.String("annict_work_id", work.ID), slog.Int("rule_id", int(ruleID)))
-		
+
 		r, err := s.esClient.DeleteRulesRuleId(ctx, int(ruleID))
 		if err != nil {
 			return fmt.Errorf("failed to delete recording rule %d for work %s: %w", ruleID, work.ID, err)
 		}
-		
+
 		if r.StatusCode != http.StatusOK && r.StatusCode != http.StatusNoContent {
 			return fmt.Errorf("failed to delete recording rule %d for work %s: got status %d", ruleID, work.ID, r.StatusCode)
 		}
-		
+
 		slog.Info("removed recording rule from EPGStation", slog.String("annict_work_title", work.Title), slog.String("annict_work_id", work.ID), slog.Int("rule_id", int(ruleID)))
 		syncerRecordingRuleSynced.WithLabelValues(strconv.Itoa(int(ruleID)), work.ID).Set(0)
 	}
