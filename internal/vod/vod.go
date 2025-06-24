@@ -10,8 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
 	"log/slog"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 // StreamingService represents a VOD streaming service

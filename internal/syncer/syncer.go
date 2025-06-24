@@ -12,13 +12,14 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	"github.com/Khan/genqlient/graphql"
 	"github.com/cockroachdb/pebble"
 	"github.com/miscord-dev/annict-epgstation-connector/annict"
 	"github.com/miscord-dev/annict-epgstation-connector/epgstation"
 	"github.com/miscord-dev/annict-epgstation-connector/internal/vod"
 	"go.uber.org/multierr"
-	"log/slog"
 )
 
 const (
