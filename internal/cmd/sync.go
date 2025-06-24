@@ -57,10 +57,10 @@ var syncCmd = &cli.Command{
 			Usage: "enable fallback VOD detection when specific VOD section is not found (searches all page links with filtering)",
 			Value: false,
 		},
-		// enable stop watching rule removal
+		// enable recording rule removal
 		&cli.BoolFlag{
-			Name:  "enable-stop-watching-removal",
-			Usage: "enable automatic removal of recording rules when anime is marked as STOP_WATCHING on Annict",
+			Name:  "enable-rule-removal",
+			Usage: "enable automatic removal of recording rules when anime is marked as STOP_WATCHING or WATCHED on Annict",
 			Value: false,
 		},
 	},
@@ -68,7 +68,7 @@ var syncCmd = &cli.Command{
 		// Parse excluded VOD services
 		excludedVODServices := c.StringSlice("exclude-vod-services")
 		enableVODFallback := c.Bool("enable-vod-fallback")
-		enableStopWatchingRemoval := c.Bool("enable-stop-watching-removal")
+		enableRuleRemoval := c.Bool("enable-rule-removal")
 
 		s, err := syncer.NewSyncer(
 			syncer.WithAnnictAPIToken(c.String(string(annictAPITokenFlag))),
@@ -77,7 +77,7 @@ var syncCmd = &cli.Command{
 			syncer.WithDBPath(c.String("db-path")),
 			syncer.WithExcludedVODServicesFromStrings(excludedVODServices),
 			syncer.WithVODFallback(enableVODFallback),
-			syncer.WithStopWatchingRemoval(enableStopWatchingRemoval),
+			syncer.WithRuleRemoval(enableRuleRemoval),
 		)
 		if err != nil {
 			return err

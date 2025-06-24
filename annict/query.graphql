@@ -69,3 +69,21 @@ query GetStopWatchingWorks {
     }
   }
 }
+
+query GetWatchedWorks {
+  viewer {
+    works(state: WATCHED){
+      nodes {
+        annictId
+        title
+        seasonName
+        seasonYear
+        programs (first: 1) {
+          nodes {
+            startedAt
+          }
+        }
+      }
+    }
+  }
+}

@@ -282,6 +282,95 @@ func (v *GetWannaWatchWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgram
 	return v.StartedAt
 }
 
+// GetWatchedWorksResponse is returned by GetWatchedWorks on success.
+type GetWatchedWorksResponse struct {
+	Viewer GetWatchedWorksViewerUser `json:"viewer"`
+}
+
+// GetViewer returns GetWatchedWorksResponse.Viewer, and is useful for accessing the field via an interface.
+func (v *GetWatchedWorksResponse) GetViewer() GetWatchedWorksViewerUser { return v.Viewer }
+
+// GetWatchedWorksViewerUser includes the requested fields of the GraphQL type User.
+type GetWatchedWorksViewerUser struct {
+	Works GetWatchedWorksViewerUserWorksWorkConnection `json:"works"`
+}
+
+// GetWorks returns GetWatchedWorksViewerUser.Works, and is useful for accessing the field via an interface.
+func (v *GetWatchedWorksViewerUser) GetWorks() GetWatchedWorksViewerUserWorksWorkConnection {
+	return v.Works
+}
+
+// GetWatchedWorksViewerUserWorksWorkConnection includes the requested fields of the GraphQL type WorkConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Work.
+type GetWatchedWorksViewerUserWorksWorkConnection struct {
+	// A list of nodes.
+	Nodes []GetWatchedWorksViewerUserWorksWorkConnectionNodesWork `json:"nodes"`
+}
+
+// GetNodes returns GetWatchedWorksViewerUserWorksWorkConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *GetWatchedWorksViewerUserWorksWorkConnection) GetNodes() []GetWatchedWorksViewerUserWorksWorkConnectionNodesWork {
+	return v.Nodes
+}
+
+// GetWatchedWorksViewerUserWorksWorkConnectionNodesWork includes the requested fields of the GraphQL type Work.
+// The GraphQL type's documentation follows.
+//
+// An anime title
+type GetWatchedWorksViewerUserWorksWorkConnectionNodesWork struct {
+	AnnictId   int                                                                            `json:"annictId"`
+	Title      string                                                                         `json:"title"`
+	SeasonName SeasonName                                                                     `json:"seasonName"`
+	SeasonYear int                                                                            `json:"seasonYear"`
+	Programs   GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection `json:"programs"`
+}
+
+// GetAnnictId returns GetWatchedWorksViewerUserWorksWorkConnectionNodesWork.AnnictId, and is useful for accessing the field via an interface.
+func (v *GetWatchedWorksViewerUserWorksWorkConnectionNodesWork) GetAnnictId() int { return v.AnnictId }
+
+// GetTitle returns GetWatchedWorksViewerUserWorksWorkConnectionNodesWork.Title, and is useful for accessing the field via an interface.
+func (v *GetWatchedWorksViewerUserWorksWorkConnectionNodesWork) GetTitle() string { return v.Title }
+
+// GetSeasonName returns GetWatchedWorksViewerUserWorksWorkConnectionNodesWork.SeasonName, and is useful for accessing the field via an interface.
+func (v *GetWatchedWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonName() SeasonName {
+	return v.SeasonName
+}
+
+// GetSeasonYear returns GetWatchedWorksViewerUserWorksWorkConnectionNodesWork.SeasonYear, and is useful for accessing the field via an interface.
+func (v *GetWatchedWorksViewerUserWorksWorkConnectionNodesWork) GetSeasonYear() int {
+	return v.SeasonYear
+}
+
+// GetPrograms returns GetWatchedWorksViewerUserWorksWorkConnectionNodesWork.Programs, and is useful for accessing the field via an interface.
+func (v *GetWatchedWorksViewerUserWorksWorkConnectionNodesWork) GetPrograms() GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection {
+	return v.Programs
+}
+
+// GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection includes the requested fields of the GraphQL type ProgramConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Program.
+type GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection struct {
+	// A list of nodes.
+	Nodes []GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram `json:"nodes"`
+}
+
+// GetNodes returns GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnection) GetNodes() []GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram {
+	return v.Nodes
+}
+
+// GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram includes the requested fields of the GraphQL type Program.
+type GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram struct {
+	StartedAt time.Time `json:"startedAt"`
+}
+
+// GetStartedAt returns GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram.StartedAt, and is useful for accessing the field via an interface.
+func (v *GetWatchedWorksViewerUserWorksWorkConnectionNodesWorkProgramsProgramConnectionNodesProgram) GetStartedAt() time.Time {
+	return v.StartedAt
+}
+
 // GetWatchingWorksResponse is returned by GetWatchingWorks on success.
 type GetWatchingWorksResponse struct {
 	Viewer GetWatchingWorksViewerUser `json:"viewer"`
@@ -499,6 +588,49 @@ func GetWannaWatchWorks(
 	var err_ error
 
 	var data_ GetWannaWatchWorksResponse
+	resp_ := &graphql.Response{Data: &data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return &data_, err_
+}
+
+// The query or mutation executed by GetWatchedWorks.
+const GetWatchedWorks_Operation = `
+query GetWatchedWorks {
+	viewer {
+		works(state: WATCHED) {
+			nodes {
+				annictId
+				title
+				seasonName
+				seasonYear
+				programs(first: 1) {
+					nodes {
+						startedAt
+					}
+				}
+			}
+		}
+	}
+}
+`
+
+func GetWatchedWorks(
+	ctx_ context.Context,
+	client_ graphql.Client,
+) (*GetWatchedWorksResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "GetWatchedWorks",
+		Query:  GetWatchedWorks_Operation,
+	}
+	var err_ error
+
+	var data_ GetWatchedWorksResponse
 	resp_ := &graphql.Response{Data: &data_}
 
 	err_ = client_.MakeRequest(

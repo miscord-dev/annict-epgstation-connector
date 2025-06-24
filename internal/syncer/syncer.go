@@ -32,22 +32,22 @@ type Interface interface {
 }
 
 type syncer struct {
-	annictClient              graphql.Client
-	esClient                  *epgstation.Client
-	db                        *pebble.DB
-	vodChecker                *vod.Checker
-	excludedVODServices       []vod.StreamingService
-	enableStopWatchingRemoval bool
+	annictClient        graphql.Client
+	esClient            *epgstation.Client
+	db                  *pebble.DB
+	vodChecker          *vod.Checker
+	excludedVODServices []vod.StreamingService
+	enableRuleRemoval   bool
 }
 
 type options struct {
-	AnnictEndpoint            string
-	AnnictAPIToken            string
-	EPGStationEndpoint        string
-	DBPath                    string
-	ExcludedVODServices       []vod.StreamingService
-	EnableVODFallback         bool
-	EnableStopWatchingRemoval bool
+	AnnictEndpoint      string
+	AnnictAPIToken      string
+	EPGStationEndpoint  string
+	DBPath              string
+	ExcludedVODServices []vod.StreamingService
+	EnableVODFallback   bool
+	EnableRuleRemoval   bool
 }
 
 type Option func(*options)
@@ -98,21 +98,21 @@ func WithVODFallback(enabled bool) Option {
 	}
 }
 
-func WithStopWatchingRemoval(enabled bool) Option {
+func WithRuleRemoval(enabled bool) Option {
 	return func(o *options) {
-		o.EnableStopWatchingRemoval = enabled
+		o.EnableRuleRemoval = enabled
 	}
 }
 
 func NewSyncer(opts ...Option) (Interface, error) {
 	o := options{
-		AnnictEndpoint:            defaultAnnictEndpoint,
-		AnnictAPIToken:            "",
-		EPGStationEndpoint:        defaultEPGStationEndpoint,
-		DBPath:                    defaultDBPath,
-		ExcludedVODServices:       []vod.StreamingService{},
-		EnableVODFallback:         false,
-		EnableStopWatchingRemoval: false,
+		AnnictEndpoint:      defaultAnnictEndpoint,
+		AnnictAPIToken:      "",
+		EPGStationEndpoint:  defaultEPGStationEndpoint,
+		DBPath:              defaultDBPath,
+		ExcludedVODServices: []vod.StreamingService{},
+		EnableVODFallback:   false,
+		EnableRuleRemoval:   false,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -130,12 +130,12 @@ func NewSyncer(opts ...Option) (Interface, error) {
 		return nil, fmt.Errorf("failed to initialize Syncer: %w", err)
 	}
 	return &syncer{
-		annictClient:              annictClient,
-		esClient:                  esClient,
-		db:                        db,
-		vodChecker:                vod.NewCheckerWithFallback(o.EnableVODFallback),
-		excludedVODServices:       o.ExcludedVODServices,
-		enableStopWatchingRemoval: o.EnableStopWatchingRemoval,
+		annictClient:        annictClient,
+		esClient:            esClient,
+		db:                  db,
+		vodChecker:          vod.NewCheckerWithFallback(o.EnableVODFallback),
+		excludedVODServices: o.ExcludedVODServices,
+		enableRuleRemoval:   o.EnableRuleRemoval,
 	}, nil
 }
 
@@ -182,14 +182,27 @@ func (s *syncer) sync(ctx context.Context) error {
 		return err
 	}
 
-	// Handle STOP_WATCHING works - remove recording rules (only if enabled)
-	if s.enableStopWatchingRemoval {
+	// Handle STOP_WATCHING and WATCHED works - remove recording rules (only if enabled)
+	if s.enableRuleRemoval {
+		var worksToRemove []annictWork
+		
+		// Get STOP_WATCHING works
 		if stopWatchingWorks, err := s.getStopWatchingWorks(ctx); err != nil {
 			return err
 		} else {
-			if err := s.removeRulesFromEPGStation(ctx, stopWatchingWorks); err != nil {
-				return err
-			}
+			worksToRemove = append(worksToRemove, stopWatchingWorks...)
+		}
+		
+		// Get WATCHED works
+		if watchedWorks, err := s.getWatchedWorks(ctx); err != nil {
+			return err
+		} else {
+			worksToRemove = append(worksToRemove, watchedWorks...)
+		}
+		
+		// Remove rules for all works
+		if err := s.removeRulesFromEPGStation(ctx, worksToRemove); err != nil {
+			return err
 		}
 	}
 
@@ -426,6 +439,28 @@ func (s *syncer) getStopWatchingWorks(ctx context.Context) ([]annictWork, error)
 	return titles, nil
 }
 
+func (s *syncer) getWatchedWorks(ctx context.Context) ([]annictWork, error) {
+	titles := make([]annictWork, 0)
+	r, err := annict.GetWatchedWorks(ctx, s.annictClient)
+	if err != nil {
+		return titles, fmt.Errorf("failed to get watched works: %w", err)
+	}
+	for _, n := range r.Viewer.Works.Nodes {
+		var startedAt time.Time
+		if len(n.Programs.Nodes) != 0 {
+			startedAt = n.Programs.Nodes[0].StartedAt
+		}
+		titles = append(titles, annictWork{
+			ID:         strconv.Itoa(n.AnnictId),
+			Title:      n.Title,
+			SeasonName: string(n.SeasonName),
+			SeasonYear: n.SeasonYear,
+			StartedAt:  startedAt,
+		})
+	}
+	return titles, nil
+}
+
 func (s *syncer) removeRulesFromEPGStation(ctx context.Context, works []annictWork) error {
 	var errs error
 	for _, work := range works {
@@ -441,7 +476,7 @@ func (s *syncer) removeRuleFromEPGStation(ctx context.Context, work annictWork) 
 	ruleIDs, err := s.getRecordingRuleIDsByAnnictWorkID(work.ID)
 	if err != nil {
 		if errors.Is(err, pebble.ErrNotFound) {
-			slog.Debug("no recording rules found for stop watching work", slog.String("annict_work_id", work.ID), slog.String("title", work.Title))
+			slog.Debug("no recording rules found for work to remove", slog.String("annict_work_id", work.ID), slog.String("title", work.Title))
 			return nil
 		}
 		return fmt.Errorf("failed to get recording rule IDs for Annict work ID %s: %w", work.ID, err)
@@ -468,7 +503,7 @@ func (s *syncer) removeRuleFromEPGStation(ctx context.Context, work annictWork) 
 		return fmt.Errorf("failed to delete recording rule IDs mapping for Annict work ID %s: %w", work.ID, err)
 	}
 
-	slog.Debug("removed all recording rules for stop watching work", slog.String("annict_work_id", work.ID), slog.String("title", work.Title), slog.Int("number_of_rules", len(ruleIDs)))
+	slog.Debug("removed all recording rules for completed work", slog.String("annict_work_id", work.ID), slog.String("title", work.Title), slog.Int("number_of_rules", len(ruleIDs)))
 	return nil
 }
 
