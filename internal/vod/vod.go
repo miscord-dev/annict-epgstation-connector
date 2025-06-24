@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // StreamingService represents a VOD streaming service

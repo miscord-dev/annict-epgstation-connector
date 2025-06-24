@@ -18,7 +18,7 @@ import (
 	"github.com/miscord-dev/annict-epgstation-connector/epgstation"
 	"github.com/miscord-dev/annict-epgstation-connector/internal/vod"
 	"go.uber.org/multierr"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 const (
