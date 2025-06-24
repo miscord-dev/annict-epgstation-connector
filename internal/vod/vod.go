@@ -63,7 +63,7 @@ func DefaultRetryConfig() RetryConfig {
 // DefaultRateLimitConfig returns the default rate limit configuration
 func DefaultRateLimitConfig() RateLimitConfig {
 	return RateLimitConfig{
-		RequestDelay: 2 * time.Second,
+		RequestDelay: 1 * time.Second,
 	}
 }
 
