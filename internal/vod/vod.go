@@ -136,7 +136,7 @@ func (c *Checker) CheckVODServices(ctx context.Context, annictWorkID int) ([]Str
 					slog.Int("max_retries", c.retryConfig.MaxRetries),
 					slog.Duration("delay", delay),
 					slog.String("error", err.Error()))
-				
+
 				select {
 				case <-time.After(delay):
 				case <-ctx.Done():
@@ -158,7 +158,7 @@ func (c *Checker) CheckVODServices(ctx context.Context, annictWorkID int) ([]Str
 			lastErr = fmt.Errorf("HTTP error: %d", resp.StatusCode)
 			if attempt < c.retryConfig.MaxRetries {
 				delay := c.calculateBackoffDelay(attempt)
-				
+
 				// Check for Retry-After header
 				if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
 					if retrySeconds, err := strconv.Atoi(retryAfter); err == nil {
@@ -168,14 +168,14 @@ func (c *Checker) CheckVODServices(ctx context.Context, annictWorkID int) ([]Str
 						}
 					}
 				}
-				
+
 				slog.Warn("Rate limited or server error, retrying",
 					slog.Int("annict_work_id", annictWorkID),
 					slog.Int("status_code", resp.StatusCode),
 					slog.Int("attempt", attempt+1),
 					slog.Int("max_retries", c.retryConfig.MaxRetries),
 					slog.Duration("delay", delay))
-				
+
 				select {
 				case <-time.After(delay):
 				case <-ctx.Done():
@@ -220,7 +220,7 @@ func (c *Checker) applyRateLimit(ctx context.Context) error {
 			waitTime := c.rateLimitConfig.RequestDelay - elapsed
 			slog.Debug("Rate limiting: waiting before next request",
 				slog.Duration("wait_time", waitTime))
-			
+
 			select {
 			case <-time.After(waitTime):
 			case <-ctx.Done():
