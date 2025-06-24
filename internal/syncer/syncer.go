@@ -37,6 +37,7 @@ type syncer struct {
 	db                  *pebble.DB
 	vodChecker          *vod.Checker
 	excludedVODServices []vod.StreamingService
+	enableRuleRemoval   bool
 }
 
 type options struct {
@@ -46,6 +47,7 @@ type options struct {
 	DBPath              string
 	ExcludedVODServices []vod.StreamingService
 	EnableVODFallback   bool
+	EnableRuleRemoval   bool
 }
 
 type Option func(*options)
@@ -96,6 +98,12 @@ func WithVODFallback(enabled bool) Option {
 	}
 }
 
+func WithRuleRemoval(enabled bool) Option {
+	return func(o *options) {
+		o.EnableRuleRemoval = enabled
+	}
+}
+
 func NewSyncer(opts ...Option) (Interface, error) {
 	o := options{
 		AnnictEndpoint:      defaultAnnictEndpoint,
@@ -104,6 +112,7 @@ func NewSyncer(opts ...Option) (Interface, error) {
 		DBPath:              defaultDBPath,
 		ExcludedVODServices: []vod.StreamingService{},
 		EnableVODFallback:   false,
+		EnableRuleRemoval:   false,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -126,6 +135,7 @@ func NewSyncer(opts ...Option) (Interface, error) {
 		db:                  db,
 		vodChecker:          vod.NewCheckerWithFallback(o.EnableVODFallback),
 		excludedVODServices: o.ExcludedVODServices,
+		enableRuleRemoval:   o.EnableRuleRemoval,
 	}, nil
 }
 
@@ -171,6 +181,31 @@ func (s *syncer) sync(ctx context.Context) error {
 	if err := s.registerRulesToEPGStation(ctx, titles); err != nil {
 		return err
 	}
+
+	// Handle STOP_WATCHING and WATCHED works - remove recording rules (only if enabled)
+	if s.enableRuleRemoval {
+		var worksToRemove []annictWork
+
+		// Get STOP_WATCHING works
+		if stopWatchingWorks, err := s.getStopWatchingWorks(ctx); err != nil {
+			return err
+		} else {
+			worksToRemove = append(worksToRemove, stopWatchingWorks...)
+		}
+
+		// Get WATCHED works
+		if watchedWorks, err := s.getWatchedWorks(ctx); err != nil {
+			return err
+		} else {
+			worksToRemove = append(worksToRemove, watchedWorks...)
+		}
+
+		// Remove rules for all works
+		if err := s.removeRulesFromEPGStation(ctx, worksToRemove); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -382,6 +417,96 @@ func (s *syncer) getOnHoldWorks(ctx context.Context) ([]annictWork, error) {
 	return titles, nil
 }
 
+func (s *syncer) getStopWatchingWorks(ctx context.Context) ([]annictWork, error) {
+	titles := make([]annictWork, 0)
+	r, err := annict.GetStopWatchingWorks(ctx, s.annictClient)
+	if err != nil {
+		return titles, fmt.Errorf("failed to get stop watching works: %w", err)
+	}
+	for _, n := range r.Viewer.Works.Nodes {
+		var startedAt time.Time
+		if len(n.Programs.Nodes) != 0 {
+			startedAt = n.Programs.Nodes[0].StartedAt
+		}
+		titles = append(titles, annictWork{
+			ID:         strconv.Itoa(n.AnnictId),
+			Title:      n.Title,
+			SeasonName: string(n.SeasonName),
+			SeasonYear: n.SeasonYear,
+			StartedAt:  startedAt,
+		})
+	}
+	return titles, nil
+}
+
+func (s *syncer) getWatchedWorks(ctx context.Context) ([]annictWork, error) {
+	titles := make([]annictWork, 0)
+	r, err := annict.GetWatchedWorks(ctx, s.annictClient)
+	if err != nil {
+		return titles, fmt.Errorf("failed to get watched works: %w", err)
+	}
+	for _, n := range r.Viewer.Works.Nodes {
+		var startedAt time.Time
+		if len(n.Programs.Nodes) != 0 {
+			startedAt = n.Programs.Nodes[0].StartedAt
+		}
+		titles = append(titles, annictWork{
+			ID:         strconv.Itoa(n.AnnictId),
+			Title:      n.Title,
+			SeasonName: string(n.SeasonName),
+			SeasonYear: n.SeasonYear,
+			StartedAt:  startedAt,
+		})
+	}
+	return titles, nil
+}
+
+func (s *syncer) removeRulesFromEPGStation(ctx context.Context, works []annictWork) error {
+	var errs error
+	for _, work := range works {
+		errs = multierr.Append(errs, s.removeRuleFromEPGStation(ctx, work))
+	}
+	if errs != nil {
+		return fmt.Errorf("failed to remove rules from EPGStation: %w", errs)
+	}
+	return nil
+}
+
+func (s *syncer) removeRuleFromEPGStation(ctx context.Context, work annictWork) error {
+	ruleIDs, err := s.getRecordingRuleIDsByAnnictWorkID(work.ID)
+	if err != nil {
+		if errors.Is(err, pebble.ErrNotFound) {
+			slog.Debug("no recording rules found for work to remove", slog.String("annict_work_id", work.ID), slog.String("title", work.Title))
+			return nil
+		}
+		return fmt.Errorf("failed to get recording rule IDs for Annict work ID %s: %w", work.ID, err)
+	}
+
+	for _, ruleID := range ruleIDs {
+		slog.Debug("removing recording rule from EPGStation", slog.String("annict_work_title", work.Title), slog.String("annict_work_id", work.ID), slog.Int("rule_id", int(ruleID)))
+
+		r, err := s.esClient.DeleteRulesRuleId(ctx, int(ruleID))
+		if err != nil {
+			return fmt.Errorf("failed to delete recording rule %d for work %s: %w", ruleID, work.ID, err)
+		}
+
+		if r.StatusCode != http.StatusOK && r.StatusCode != http.StatusNoContent {
+			return fmt.Errorf("failed to delete recording rule %d for work %s: got status %d", ruleID, work.ID, r.StatusCode)
+		}
+
+		slog.Info("removed recording rule from EPGStation", slog.String("annict_work_title", work.Title), slog.String("annict_work_id", work.ID), slog.Int("rule_id", int(ruleID)))
+		syncerRecordingRuleSynced.WithLabelValues(strconv.Itoa(int(ruleID)), work.ID).Set(0)
+	}
+
+	// Remove the mapping from database after successfully deleting all rules
+	if err := s.deleteRecordingRuleIDsByAnnictWorkID(work.ID); err != nil {
+		return fmt.Errorf("failed to delete recording rule IDs mapping for Annict work ID %s: %w", work.ID, err)
+	}
+
+	slog.Debug("removed all recording rules for completed work", slog.String("annict_work_id", work.ID), slog.String("title", work.Title), slog.Int("number_of_rules", len(ruleIDs)))
+	return nil
+}
+
 // TODO: move these functions to a separate package
 
 // setRecordingRuleIDsByAnnictWorkID stores recording rule IDs for the given Annict work ID in the pebble DB
@@ -414,4 +539,13 @@ func (s *syncer) getRecordingRuleIDsByAnnictWorkID(annictWorkID string) ([]Recor
 		return ids, fmt.Errorf("failed to decode recording rule IDs for Annict work ID %s: %w", annictWorkID, err)
 	}
 	return ids, nil
+}
+
+// deleteRecordingRuleIDsByAnnictWorkID removes recording rule IDs for the given Annict work ID from the pebble DB
+func (s *syncer) deleteRecordingRuleIDsByAnnictWorkID(annictWorkID string) error {
+	err := s.db.Delete([]byte(annictWorkID), pebble.Sync)
+	if err != nil {
+		return fmt.Errorf("failed to delete recording rule IDs for Annict work ID %s: %w", annictWorkID, err)
+	}
+	return nil
 }
