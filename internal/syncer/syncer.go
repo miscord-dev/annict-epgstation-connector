@@ -32,20 +32,22 @@ type Interface interface {
 }
 
 type syncer struct {
-	annictClient        graphql.Client
-	esClient            *epgstation.Client
-	db                  *pebble.DB
-	vodChecker          *vod.Checker
-	excludedVODServices []vod.StreamingService
+	annictClient              graphql.Client
+	esClient                  *epgstation.Client
+	db                        *pebble.DB
+	vodChecker                *vod.Checker
+	excludedVODServices       []vod.StreamingService
+	enableStopWatchingRemoval bool
 }
 
 type options struct {
-	AnnictEndpoint      string
-	AnnictAPIToken      string
-	EPGStationEndpoint  string
-	DBPath              string
-	ExcludedVODServices []vod.StreamingService
-	EnableVODFallback   bool
+	AnnictEndpoint           string
+	AnnictAPIToken           string
+	EPGStationEndpoint       string
+	DBPath                   string
+	ExcludedVODServices      []vod.StreamingService
+	EnableVODFallback        bool
+	EnableStopWatchingRemoval bool
 }
 
 type Option func(*options)
@@ -96,14 +98,21 @@ func WithVODFallback(enabled bool) Option {
 	}
 }
 
+func WithStopWatchingRemoval(enabled bool) Option {
+	return func(o *options) {
+		o.EnableStopWatchingRemoval = enabled
+	}
+}
+
 func NewSyncer(opts ...Option) (Interface, error) {
 	o := options{
-		AnnictEndpoint:      defaultAnnictEndpoint,
-		AnnictAPIToken:      "",
-		EPGStationEndpoint:  defaultEPGStationEndpoint,
-		DBPath:              defaultDBPath,
-		ExcludedVODServices: []vod.StreamingService{},
-		EnableVODFallback:   false,
+		AnnictEndpoint:           defaultAnnictEndpoint,
+		AnnictAPIToken:           "",
+		EPGStationEndpoint:       defaultEPGStationEndpoint,
+		DBPath:                   defaultDBPath,
+		ExcludedVODServices:      []vod.StreamingService{},
+		EnableVODFallback:        false,
+		EnableStopWatchingRemoval: false,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -121,11 +130,12 @@ func NewSyncer(opts ...Option) (Interface, error) {
 		return nil, fmt.Errorf("failed to initialize Syncer: %w", err)
 	}
 	return &syncer{
-		annictClient:        annictClient,
-		esClient:            esClient,
-		db:                  db,
-		vodChecker:          vod.NewCheckerWithFallback(o.EnableVODFallback),
-		excludedVODServices: o.ExcludedVODServices,
+		annictClient:              annictClient,
+		esClient:                  esClient,
+		db:                        db,
+		vodChecker:                vod.NewCheckerWithFallback(o.EnableVODFallback),
+		excludedVODServices:       o.ExcludedVODServices,
+		enableStopWatchingRemoval: o.EnableStopWatchingRemoval,
 	}, nil
 }
 
@@ -172,12 +182,14 @@ func (s *syncer) sync(ctx context.Context) error {
 		return err
 	}
 
-	// Handle STOP_WATCHING works - remove recording rules
-	if stopWatchingWorks, err := s.getStopWatchingWorks(ctx); err != nil {
-		return err
-	} else {
-		if err := s.removeRulesFromEPGStation(ctx, stopWatchingWorks); err != nil {
+	// Handle STOP_WATCHING works - remove recording rules (only if enabled)
+	if s.enableStopWatchingRemoval {
+		if stopWatchingWorks, err := s.getStopWatchingWorks(ctx); err != nil {
 			return err
+		} else {
+			if err := s.removeRulesFromEPGStation(ctx, stopWatchingWorks); err != nil {
+				return err
+			}
 		}
 	}
 
