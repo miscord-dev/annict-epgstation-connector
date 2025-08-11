@@ -15,7 +15,7 @@ require (
 	github.com/onsi/gomega v1.37.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/urfave/cli/v2 v2.27.7
-	github.com/urfave/cli/v3 v3.3.8
+	github.com/urfave/cli/v3 v3.3.9
 	go.uber.org/multierr v1.11.0
 )
 
