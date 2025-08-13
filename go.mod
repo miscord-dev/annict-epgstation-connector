@@ -2,7 +2,7 @@ module github.com/miscord-dev/annict-epgstation-connector
 
 go 1.24
 
-toolchain go1.24.6
+toolchain go1.25.0
 
 require (
 	github.com/Khan/genqlient v0.8.1
