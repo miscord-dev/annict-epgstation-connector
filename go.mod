@@ -1,12 +1,10 @@
 module github.com/miscord-dev/annict-epgstation-connector
 
-go 1.24
-
-toolchain go1.24.6
+go 1.25.0
 
 require (
 	github.com/Khan/genqlient v0.8.1
-	github.com/PuerkitoBio/goquery v1.10.3
+	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/cockroachdb/pebble v1.1.5
 	github.com/getkin/kin-openapi v0.132.0
 	github.com/labstack/echo/v4 v4.13.4
@@ -69,14 +67,14 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.19 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
+	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df // indirect
-	golang.org/x/mod v0.24.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
-	golang.org/x/tools v0.31.0 // indirect
+	golang.org/x/mod v0.33.0 // indirect
+	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/tools v0.42.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
