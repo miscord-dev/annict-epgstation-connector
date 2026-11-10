@@ -1,8 +1,6 @@
 module github.com/miscord-dev/annict-epgstation-connector
 
-go 1.24
-
-toolchain go1.24.6
+go 1.26.0
 
 require (
 	github.com/Khan/genqlient v0.8.1
@@ -10,7 +8,7 @@ require (
 	github.com/cockroachdb/pebble v1.1.5
 	github.com/getkin/kin-openapi v0.132.0
 	github.com/labstack/echo/v4 v4.13.4
-	github.com/oapi-codegen/runtime v1.1.2
+	github.com/oapi-codegen/runtime v1.9.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.37.0
 	github.com/prometheus/client_golang v1.22.0
